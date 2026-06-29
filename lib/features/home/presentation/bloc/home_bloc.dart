@@ -19,6 +19,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     on<HomeAdvanceOrderRequested>(_onAdvanceOrder);
     on<HomeCompleteOrderRequested>(_onCompleteOrder);
     on<HomeOrderOfferReceived>(_onOrderOfferReceived);
+    on<HomeLocationUpdated>(_onLocationUpdated);
   }
 
   final DriverRepository _repository;
@@ -136,6 +137,13 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
       action: HomeAction.completingOrder,
       task: () => _repository.completeOrder(orderId),
     );
+  }
+
+  void _onLocationUpdated(
+    HomeLocationUpdated event,
+    Emitter<HomeState> emit,
+  ) {
+    // Stub — replace with Geolocator.getPositionStream() integration.
   }
 
   void _onOrderOfferReceived(

@@ -9,7 +9,7 @@ import 'package:bazzone_driver/features/home/domain/entities/order.dart';
 /// Mock veri kaynağı — API hazır olunca kaldırılır.
 class DriverMockDataSource implements DriverRemoteDataSource {
   DriverSession _session = DriverSession.initial.copyWith(
-    workStatus: DriverWorkStatus.online,
+    workStatus: DriverWorkStatus.offline,
     shiftSummary: const DriverShiftSummary(
       dateLabel: '06 Окт, 2025',
       earnings: '2000 с',
@@ -68,7 +68,7 @@ class DriverMockDataSource implements DriverRemoteDataSource {
       clearOfferedOrder: true,
       activeOrder: offer.copyWith(
         status: OrderStatus.active,
-        activePhase: ActiveOrderPhase.accepted,
+        activePhase: ActiveOrderPhase.headingToClient,
       ),
     );
     return _session;
@@ -90,10 +90,10 @@ class DriverMockDataSource implements DriverRemoteDataSource {
     if (active == null || active.id != orderId) return _session;
 
     final nextPhase = switch (active.activePhase) {
-      ActiveOrderPhase.accepted => ActiveOrderPhase.headingToClient,
-      ActiveOrderPhase.headingToClient => ActiveOrderPhase.headingToDestination,
-      ActiveOrderPhase.headingToDestination =>
-        ActiveOrderPhase.headingToDestination,
+      ActiveOrderPhase.headingToClient => ActiveOrderPhase.waitingForClient,
+      ActiveOrderPhase.waitingForClient => ActiveOrderPhase.headingToDestination,
+      ActiveOrderPhase.headingToDestination => ActiveOrderPhase.completed,
+      ActiveOrderPhase.completed => ActiveOrderPhase.completed,
     };
 
     _session = _session.copyWith(

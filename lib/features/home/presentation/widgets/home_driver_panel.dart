@@ -112,8 +112,40 @@ class HomeDriverPanel extends StatelessWidget {
             ),
           ),
         ),
+        if (isOnline) ...[
+          const SizedBox(height: 12),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              children: [
+                Container(
+                  width: 8,
+                  height: 8,
+                  decoration: const BoxDecoration(
+                    color: ColorConst.success,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  LocaleKeys.home_page_online.tr(),
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: ColorConst.success,
+                  ),
+                ),
+                const Expanded(
+                  child: Padding(
+                    padding: EdgeInsets.only(left: 12),
+                    child: Divider(color: ColorConst.lightGrey, height: 1),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
         const SizedBox(height: 16),
-        if (isOnline) const _SearchingIndicator(),
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
           child: isOnline
@@ -127,135 +159,6 @@ class HomeDriverPanel extends StatelessWidget {
                 ),
         ),
       ],
-    );
-  }
-}
-
-/// Sürücü çevrimiçiyken ve elinde sipariş yokken gösterilen "aranıyor"
-/// göstergesi. Nabız animasyonu, sürücüye sistemin aktif olarak sipariş
-/// aradığını hissettirir.
-class _SearchingIndicator extends StatefulWidget {
-  const _SearchingIndicator();
-
-  @override
-  State<_SearchingIndicator> createState() => _SearchingIndicatorState();
-}
-
-class _SearchingIndicatorState extends State<_SearchingIndicator>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1400),
-    )..repeat();
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-      decoration: BoxDecoration(
-        color: ColorConst.primary.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 36,
-            height: 36,
-            child: AnimatedBuilder(
-              animation: _controller,
-              builder: (context, _) {
-                return Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    _PulseRing(progress: _controller.value),
-                    const _PulseDot(),
-                  ],
-                );
-              },
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  LocaleKeys.home_page_searching_orders.tr(),
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: ColorConst.black,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  LocaleKeys.home_page_searching_orders_hint.tr(),
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w400,
-                    color: ColorConst.grey.withValues(alpha: 0.9),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _PulseRing extends StatelessWidget {
-  const _PulseRing({required this.progress});
-
-  final double progress;
-
-  @override
-  Widget build(BuildContext context) {
-    final scale = 0.4 + progress * 0.6;
-    final opacity = (1 - progress).clamp(0, 1).toDouble();
-    return Opacity(
-      opacity: opacity,
-      child: Transform.scale(
-        scale: scale,
-        child: Container(
-          width: 36,
-          height: 36,
-          decoration: BoxDecoration(
-            color: ColorConst.primary.withValues(alpha: 0.3),
-            shape: BoxShape.circle,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _PulseDot extends StatelessWidget {
-  const _PulseDot();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 14,
-      height: 14,
-      decoration: const BoxDecoration(
-        color: ColorConst.primary,
-        shape: BoxShape.circle,
-      ),
     );
   }
 }

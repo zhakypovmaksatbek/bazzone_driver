@@ -2,158 +2,176 @@ import 'package:bazzone_driver/core/theme/color_const.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-/// "Kaydırarak onayla" tarzı eylem butonu (örn. "Vardım", "Siparişi bitir").
-///
-/// Tutamaç eşik mesafesinin ötesine sürüklendiğinde [onConfirmed] tetiklenir.
-/// Eşiğe ulaşmadan bırakılırsa tutamaç başlangıç konumuna geri döner.
 class SwipeActionButton extends StatefulWidget {
   const SwipeActionButton({
     super.key,
     required this.label,
     required this.onConfirmed,
     this.isLoading = false,
-    this.confirmThreshold = 0.72,
+    this.color,
+    this.height = 60.0,
   });
 
   final String label;
   final VoidCallback onConfirmed;
   final bool isLoading;
-
-  /// Onay tetiklenmesi için tutamacın izlemesi gereken yol oranı (0-1).
-  final double confirmThreshold;
+  final Color? color;
+  final double height;
 
   @override
   State<SwipeActionButton> createState() => _SwipeActionButtonState();
 }
 
-class _SwipeActionButtonState extends State<SwipeActionButton> {
-  static const _trackHeight = 60.0;
-  static const _thumbSize = 52.0;
-  static const _thumbInset = 4.0;
+class _SwipeActionButtonState extends State<SwipeActionButton>
+    with SingleTickerProviderStateMixin {
+  static const _thumbDiameter = 52.0;
+  static const _horizontalPadding = 4.0;
+  static const _confirmThreshold = 0.80;
 
-  double _dragExtent = 0;
-  bool _dragging = false;
+  double _dragOffset = 0;
+  double _maxDragWidth = 0;
   bool _confirmed = false;
+
+  late AnimationController _returnController;
+  Animation<double>? _returnAnimation;
+
+  Color get _color => widget.color ?? ColorConst.primary;
+
+  @override
+  void initState() {
+    super.initState();
+    _returnController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 380),
+    )..addListener(_onReturnTick);
+  }
 
   @override
   void didUpdateWidget(SwipeActionButton oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (!widget.isLoading && oldWidget.isLoading) {
+    if ((oldWidget.isLoading && !widget.isLoading) ||
+        (oldWidget.label != widget.label)) {
       setState(() {
         _confirmed = false;
-        _dragExtent = 0;
+        _dragOffset = 0;
       });
     }
   }
 
-  double _maxDrag(double trackWidth) =>
-      trackWidth - _thumbSize - _thumbInset * 2;
+  void _onReturnTick() {
+    final animation = _returnAnimation;
+    if (animation == null) return;
+    setState(() => _dragOffset = animation.value);
+  }
 
-  void _onDragUpdate(DragUpdateDetails details, double trackWidth) {
+  @override
+  void dispose() {
+    _returnController.dispose();
+    super.dispose();
+  }
+
+  double get _progress =>
+      _maxDragWidth <= 0 ? 0 : (_dragOffset / _maxDragWidth).clamp(0.0, 1.0);
+
+  void _onHorizontalDragUpdate(DragUpdateDetails details) {
     if (widget.isLoading || _confirmed) return;
-    final maxDrag = _maxDrag(trackWidth);
+    _returnController.stop();
     setState(() {
-      _dragging = true;
-      _dragExtent = (_dragExtent + details.delta.dx).clamp(0, maxDrag);
+      _dragOffset = (_dragOffset + details.delta.dx).clamp(0.0, _maxDragWidth);
     });
   }
 
-  void _onDragEnd(DragEndDetails details, double trackWidth) {
+  void _onHorizontalDragEnd(DragEndDetails details) {
     if (widget.isLoading || _confirmed) return;
-    final maxDrag = _maxDrag(trackWidth);
-    final reachedThreshold =
-        maxDrag > 0 && _dragExtent / maxDrag >= widget.confirmThreshold;
 
-    if (reachedThreshold) {
-      HapticFeedback.mediumImpact();
+    if (_progress >= _confirmThreshold) {
       setState(() {
-        _dragging = false;
+        _dragOffset = _maxDragWidth;
         _confirmed = true;
-        _dragExtent = maxDrag;
       });
+      HapticFeedback.mediumImpact();
       widget.onConfirmed();
-    } else {
-      setState(() {
-        _dragging = false;
-        _dragExtent = 0;
-      });
+      return;
     }
+
+    _returnAnimation = Tween<double>(begin: _dragOffset, end: 0).animate(
+      CurvedAnimation(parent: _returnController, curve: Curves.elasticOut),
+    );
+    _returnController.forward(from: 0);
   }
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: _trackHeight,
-      width: double.infinity,
+    return Semantics(
+      label: widget.label,
+      button: true,
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final trackWidth = constraints.maxWidth;
-          final maxDrag = _maxDrag(trackWidth);
-          final progress =
-              maxDrag > 0 ? (_dragExtent / maxDrag).clamp(0, 1) : 0.0;
+          _maxDragWidth = constraints.maxWidth -
+              _thumbDiameter -
+              (_horizontalPadding * 2);
 
-          return DecoratedBox(
-            decoration: BoxDecoration(
-              color: ColorConst.primary.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(_trackHeight / 2),
-            ),
-            child: Stack(
-              alignment: Alignment.centerLeft,
-              children: [
-                Center(
-                  child: Opacity(
-                    opacity: (1 - progress * 1.4).clamp(0, 1).toDouble(),
+          final backgroundOpacity = 0.08 + 0.12 * _progress;
+          final labelOpacity = (1 - _progress * 1.5).clamp(0.0, 1.0);
+
+          return GestureDetector(
+            onHorizontalDragUpdate: _onHorizontalDragUpdate,
+            onHorizontalDragEnd: _onHorizontalDragEnd,
+            child: Container(
+              height: widget.height,
+              decoration: BoxDecoration(
+                color: _color.withValues(alpha: backgroundOpacity),
+                borderRadius: BorderRadius.circular(widget.height / 2),
+                border: Border.all(color: _color),
+              ),
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  Opacity(
+                    opacity: labelOpacity,
                     child: Text(
                       widget.label,
-                      style: const TextStyle(
-                        fontSize: 15,
+                      style: TextStyle(
+                        fontSize: 16,
                         fontWeight: FontWeight.w600,
-                        color: ColorConst.primary,
+                        color: _color,
                       ),
                     ),
                   ),
-                ),
-                AnimatedPositioned(
-                  duration: _dragging
-                      ? Duration.zero
-                      : const Duration(milliseconds: 220),
-                  curve: Curves.easeOut,
-                  left: _thumbInset + _dragExtent,
-                  top: _thumbInset,
-                  child: GestureDetector(
-                    onHorizontalDragUpdate: (d) =>
-                        _onDragUpdate(d, trackWidth),
-                    onHorizontalDragEnd: (d) => _onDragEnd(d, trackWidth),
-                    child: Container(
-                      width: _thumbSize,
-                      height: _thumbSize,
-                      alignment: Alignment.center,
-                      decoration: const BoxDecoration(
-                        color: ColorConst.primary,
-                        shape: BoxShape.circle,
-                      ),
-                      child: widget.isLoading
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: ColorConst.white,
-                              ),
-                            )
-                          : const Icon(
-                              Icons.keyboard_double_arrow_right,
-                              color: ColorConst.white,
-                              size: 24,
-                            ),
-                    ),
+                  Positioned(
+                    left: _horizontalPadding + _dragOffset,
+                    child: _buildThumb(),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           );
         },
       ),
+    );
+  }
+
+  Widget _buildThumb() {
+    return Container(
+      width: _thumbDiameter,
+      height: _thumbDiameter,
+      decoration: BoxDecoration(
+        color: _color,
+        shape: BoxShape.circle,
+      ),
+      child: widget.isLoading
+          ? const Padding(
+              padding: EdgeInsets.all(14),
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: ColorConst.white,
+              ),
+            )
+          : const Icon(
+              Icons.arrow_forward,
+              color: ColorConst.white,
+              size: 24,
+            ),
     );
   }
 }

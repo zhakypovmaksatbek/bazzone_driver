@@ -1,7 +1,6 @@
 import 'package:bazzone_driver/core/theme/color_const.dart';
 import 'package:bazzone_driver/features/home/domain/entities/order.dart';
 import 'package:bazzone_driver/generated/locale_keys.g.dart';
-import 'package:bazzone_driver/shared/widgets/image/user_avatar_widget.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
@@ -23,274 +22,244 @@ class OrderDetailBody extends StatelessWidget {
       children: [
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: OrderRouteRow(
+          child: OrderRouteColumn(
             pickup: order.pickupAddress,
             destination: order.destinationAddress,
-          ),
-        ),
-        const SizedBox(height: 20),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Text(
-            order.price,
-            style: const TextStyle(
-              fontSize: 32,
-              fontWeight: FontWeight.w700,
-              color: ColorConst.black,
-              height: 1.1,
-            ),
-          ),
-        ),
-        const SizedBox(height: 8),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Text(
-            order.description,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w400,
-              color: ColorConst.grey.withValues(alpha: 0.9),
-              height: 1.4,
-            ),
+            pickupDistanceKm: order.distanceToClientKm,
+            destinationDistanceKm: order.distanceToPointKm,
           ),
         ),
         const SizedBox(height: 16),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: OrderInfoCards(order: order),
-        ),
-        if (showComments && order.commentTags.isNotEmpty) ...[
-          const SizedBox(height: 16),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: OrderCommentTags(tags: order.commentTags),
+          child: OrderCustomerRow(
+            customerName: order.customerName,
+            rating: order.customerRating,
+            tags: showComments ? order.commentTags : const [],
           ),
-        ],
+        ),
       ],
     );
   }
 }
 
-class OrderRouteRow extends StatelessWidget {
-  const OrderRouteRow({
+class OrderRouteColumn extends StatelessWidget {
+  const OrderRouteColumn({
     super.key,
     required this.pickup,
     required this.destination,
+    required this.pickupDistanceKm,
+    required this.destinationDistanceKm,
   });
 
   final String pickup;
   final String destination;
+  final double pickupDistanceKm;
+  final double destinationDistanceKm;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: Text(
-            pickup,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: ColorConst.black,
-            ),
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          child: Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: ColorConst.lightGrey,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: const Icon(Icons.swap_vert, size: 20, color: ColorConst.black),
-          ),
-        ),
-        Expanded(
-          child: Text(
-            destination,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            textAlign: TextAlign.end,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: ColorConst.black,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class OrderInfoCards extends StatelessWidget {
-  const OrderInfoCards({super.key, required this.order});
-
-  final Order order;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: OrderInfoCard(
-            title: LocaleKeys.home_page_distance_to_client.tr(),
-            value: LocaleKeys.home_page_km.tr(
-              args: [order.distanceToClientKm.toString()],
-            ),
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: OrderInfoCard(
-            title: LocaleKeys.home_page_distance_to_point.tr(),
-            value: LocaleKeys.home_page_km.tr(
-              args: [order.distanceToPointKm.toString()],
-            ),
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: OrderInfoCard(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                UserAvatarWidget(
-                  userName: order.customerName,
-                  imageUrl: order.customerAvatarUrl,
-                  size: UserAvatarSize.small,
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Column(
+            children: [
+              _RouteMarker(label: LocaleKeys.home_page_pickup_point.tr()),
+              Expanded(
+                child: Container(
+                  width: 2,
+                  margin: const EdgeInsets.symmetric(vertical: 4),
+                  color: ColorConst.primary.withValues(alpha: 0.35),
                 ),
-                const SizedBox(height: 6),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.star, size: 14, color: Color(0xFFFFB800)),
-                    const SizedBox(width: 4),
-                    Text(
-                      order.customerRating.toString(),
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        color: ColorConst.black,
-                      ),
-                    ),
-                  ],
+              ),
+              _RouteMarker(label: LocaleKeys.home_page_destination_point.tr()),
+            ],
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _RouteStopRow(
+                  address: pickup,
+                  distanceKm: pickupDistanceKm,
+                ),
+                const SizedBox(height: 20),
+                _RouteStopRow(
+                  address: destination,
+                  distanceKm: destinationDistanceKm,
                 ),
               ],
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RouteMarker extends StatelessWidget {
+  const _RouteMarker({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          width: 22,
+          height: 22,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: ColorConst.primary.withValues(alpha: 0.12),
+            shape: BoxShape.circle,
+          ),
+          child: Text(
+            label,
+            style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: ColorConst.primary,
+            ),
+          ),
         ),
       ],
     );
   }
 }
 
-class OrderInfoCard extends StatelessWidget {
-  const OrderInfoCard({super.key, this.title, this.value, this.child})
-      : assert(
-          (title != null && value != null) || child != null,
-          'Provide title/value or child',
-        );
+class _RouteStopRow extends StatelessWidget {
+  const _RouteStopRow({
+    required this.address,
+    required this.distanceKm,
+  });
 
-  final String? title;
-  final String? value;
-  final Widget? child;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 88,
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
-      decoration: BoxDecoration(
-        color: ColorConst.lightGrey,
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: child ??
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                title!,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w400,
-                  color: ColorConst.grey.withValues(alpha: 0.9),
-                  height: 1.2,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                value!,
-                style: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
-                  color: ColorConst.black,
-                ),
-              ),
-            ],
-          ),
-    );
-  }
-}
-
-class OrderCommentTags extends StatelessWidget {
-  const OrderCommentTags({super.key, required this.tags});
-
-  final List<String> tags;
+  final String address;
+  final double distanceKm;
 
   @override
   Widget build(BuildContext context) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          width: 32,
-          height: 32,
-          decoration: BoxDecoration(
-            color: ColorConst.primary.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: const Icon(
-            Icons.chat_bubble_outline,
-            size: 18,
-            color: ColorConst.primary,
+        Expanded(
+          child: Text(
+            address,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              color: ColorConst.black,
+              height: 1.3,
+            ),
           ),
         ),
-        const SizedBox(width: 10),
+        const SizedBox(width: 8),
+        _DistanceBadge(km: distanceKm),
+      ],
+    );
+  }
+}
+
+class _DistanceBadge extends StatelessWidget {
+  const _DistanceBadge({required this.km});
+
+  final double km;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: ColorConst.lightGrey,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        LocaleKeys.home_page_km.tr(args: [km.toString()]),
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: ColorConst.grey.withValues(alpha: 0.95),
+        ),
+      ),
+    );
+  }
+}
+
+class OrderCustomerRow extends StatelessWidget {
+  const OrderCustomerRow({
+    super.key,
+    required this.customerName,
+    required this.rating,
+    required this.tags,
+  });
+
+  final String customerName;
+  final double rating;
+  final List<String> tags;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.star, size: 16, color: ColorConst.primary),
+            const SizedBox(width: 4),
+            Text(
+              rating.toString(),
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                color: ColorConst.black,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(width: 12),
         Expanded(
-          child: Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              for (final tag in tags)
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: ColorConst.lightGrey,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    tag,
-                    style: TextStyle(
-                      fontSize: 13,
+          child: Text(
+            customerName,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: ColorConst.black,
+            ),
+          ),
+        ),
+        if (tags.isNotEmpty) ...[
+          const SizedBox(width: 8),
+          Flexible(
+            child: Wrap(
+              spacing: 6,
+              runSpacing: 4,
+              alignment: WrapAlignment.end,
+              children: [
+                for (final tag in tags.take(2))
+                  Chip(
+                    label: Text(tag),
+                    labelStyle: TextStyle(
+                      fontSize: 11,
                       fontWeight: FontWeight.w500,
                       color: ColorConst.grey.withValues(alpha: 0.95),
                     ),
+                    visualDensity: VisualDensity.compact,
+                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    backgroundColor: ColorConst.lightGrey,
+                    side: BorderSide.none,
+                    padding: EdgeInsets.zero,
                   ),
-                ),
-            ],
+              ],
+            ),
           ),
-        ),
+        ],
       ],
     );
   }

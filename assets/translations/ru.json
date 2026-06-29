@@ -39,11 +39,16 @@
         "km": "{} км",
         "en_route_to_client": "В пути к клиенту",
         "en_route_to_destination": "В пути к точке назначения",
-        "arrived_at_client": "Прибыл к клиенту",
-        "complete_order": "Завершить заказ",
-        "searching_orders": "Ищем заказы для вас",
-        "searching_orders_hint": "Оставайтесь онлайн — предложим подходящий заказ",
+        "arrived_at_client": "Ожидание клиента...",
+        "complete_order": "Завершить",
+        "new_order": "Новый заказ!",
+        "online": "Онлайн",
+        "accept_order": "Принять заказ",
+        "arrived": "На месте",
+        "pickup_point": "А",
+        "destination_point": "Б",
+        "seconds_short": "{}с",
         "order_accepted": "Заказ принят",
-        "depart": "Выехать к клиенту"
+        "depart": "Начать поездку"
     }
 }

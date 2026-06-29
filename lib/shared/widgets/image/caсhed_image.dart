@@ -41,9 +41,7 @@ class CachedImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final effectiveFit = fit ?? BoxFit.cover;
-    final isSvg = imageUrl.toLowerCase().endsWith('.svg');
     const errorAssetSize = 43.5;
 
     Widget buildFallback() {

@@ -1,325 +1,378 @@
 import 'package:bazzone_driver/core/theme/color_const.dart';
 import 'package:bazzone_driver/features/home/domain/entities/home_sheet_phase.dart';
-import 'package:bazzone_driver/features/home/domain/entities/order_status.dart';
 import 'package:flutter/material.dart';
 
-/// Sürücü ana ekranındaki sürüklenebilir alt panel.
-///
-/// Boyutlandırma mantığı [phase] ve aktif siparişin [activeOrderPhase]'ine
-/// göre değişir, böylece her ekran (özet / teklif / aktif sipariş) kendi
-/// içeriğine uygun bir yükseklikte açılır.
-class HomeDriverSheet extends StatelessWidget {
+typedef HomeSheetSizes = ({double minChildSize, double maxChildSize});
+
+class HomeDriverSheet extends StatefulWidget {
   const HomeDriverSheet({
     super.key,
     required this.controller,
     required this.phase,
+    this.stateKey,
     required this.initialChildSize,
-    required this.isCollapsed,
     required this.child,
-    this.activeOrderPhase,
-    this.onCollapse,
-    this.onExpand,
+    required this.measureCollapsed,
+    required this.measureExpanded,
+    this.onSizeChanged,
+    this.onSizesResolved,
   });
 
   final DraggableScrollableController controller;
   final HomeSheetPhase phase;
-  final ActiveOrderPhase? activeOrderPhase;
+  final Object? stateKey;
   final double initialChildSize;
-  final bool isCollapsed;
   final Widget child;
-  final VoidCallback? onCollapse;
-  final VoidCallback? onExpand;
+  final Widget measureCollapsed;
+  final Widget measureExpanded;
+  final ValueChanged<double>? onSizeChanged;
+  final ValueChanged<HomeSheetSizes>? onSizesResolved;
 
-  static const minSize = 0.15;
-  static const maxSize = 0.85;
-  static const orderMidSize = 0.5;
-  static const driverContentHeight = 210.0;
-  static const navContentHeight = 260.0;
-  static const collapsedThreshold = minSize + 0.04;
+  static const maxSize = 0.92;
+  static const measurementSlop = 12.0;
+  static const fallbackCollapsedHeight = 120.0;
+  static const fallbackExpandedHeight = 320.0;
+  static const collapsedThresholdDelta = 0.02;
 
-  static bool isCollapsedExtent(double extent) => extent <= collapsedThreshold;
-
-  static bool isNavPhase(ActiveOrderPhase? activeOrderPhase) =>
-      activeOrderPhase == ActiveOrderPhase.headingToClient ||
-      activeOrderPhase == ActiveOrderPhase.headingToDestination;
-
-  static double _heightRatio(double height, BuildContext context) {
-    final screenHeight = MediaQuery.sizeOf(context).height;
-    return (height / screenHeight).clamp(minSize, maxSize);
+  static bool isCollapsedExtent(double extent, double minChildSize) {
+    return extent <= minChildSize + collapsedThresholdDelta;
   }
 
-  static double driverInitialSize(BuildContext context) =>
-      _heightRatio(driverContentHeight, context);
+  static bool isSingleSizePhase(HomeSheetPhase phase) {
+    return phase == HomeSheetPhase.driverSummary;
+  }
 
-  static double navInitialSize(BuildContext context) =>
-      _heightRatio(navContentHeight, context);
+  static double contentFitFraction(
+    BuildContext context,
+    double contentHeight,
+  ) {
+    final screenHeight = MediaQuery.sizeOf(context).height;
+    return ((contentHeight + _SheetDragZone.totalHeight + measurementSlop) /
+            screenHeight)
+        .clamp(0.0, maxSize);
+  }
 
   static double targetSizeFor(
     HomeSheetPhase phase,
     BuildContext context, {
-    ActiveOrderPhase? activeOrderPhase,
+    double? expandedContentHeight,
   }) {
-    return switch (phase) {
-      HomeSheetPhase.driverSummary => driverInitialSize(context),
-      HomeSheetPhase.orderOffer => orderMidSize,
-      HomeSheetPhase.activeOrder => isNavPhase(activeOrderPhase)
-          ? navInitialSize(context)
-          : orderMidSize,
-    };
+    return contentFitFraction(
+      context,
+      expandedContentHeight ?? fallbackExpandedHeight,
+    );
   }
 
-  static List<double> snapSizesFor(
-    HomeSheetPhase phase,
-    BuildContext context, {
-    ActiveOrderPhase? activeOrderPhase,
+  static List<double> snapSizesFor({
+    required HomeSheetPhase phase,
+    required double minChildSize,
+    required double maxChildSize,
   }) {
-    return switch (phase) {
-      HomeSheetPhase.driverSummary => [minSize, driverInitialSize(context)],
-      HomeSheetPhase.orderOffer => [minSize, orderMidSize, maxSize],
-      HomeSheetPhase.activeOrder => isNavPhase(activeOrderPhase)
-          ? [minSize, navInitialSize(context), maxSize]
-          : [minSize, orderMidSize, maxSize],
-    };
+    if (isSingleSizePhase(phase) ||
+        (maxChildSize - minChildSize).abs() < 0.01) {
+      return [maxChildSize];
+    }
+    return [minChildSize, maxChildSize];
   }
 
-  static double maxSizeFor(HomeSheetPhase phase, BuildContext context) {
-    return switch (phase) {
-      HomeSheetPhase.driverSummary => driverInitialSize(context),
-      HomeSheetPhase.orderOffer || HomeSheetPhase.activeOrder => maxSize,
-    };
+  @override
+  State<HomeDriverSheet> createState() => _HomeDriverSheetState();
+}
+
+class _HomeDriverSheetState extends State<HomeDriverSheet> {
+  final _SheetSizesNotifier _sizes = _SheetSizesNotifier();
+  HomeSheetPhase? _lockedPhase;
+  double? _lockedMin;
+  double? _lockedMax;
+  HomeSheetSizes? _lastReportedSizes;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.controller.addListener(_onControllerChanged);
+  }
+
+  @override
+  void didUpdateWidget(HomeDriverSheet oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.phase != widget.phase || oldWidget.stateKey != widget.stateKey) {
+      _lockedPhase = null;
+      _lockedMin = null;
+      _lockedMax = null;
+      _lastReportedSizes = null;
+      _sizes.reset();
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.controller.removeListener(_onControllerChanged);
+    _sizes.dispose();
+    super.dispose();
+  }
+
+  void _onControllerChanged() {
+    if (!widget.controller.isAttached) return;
+    widget.onSizeChanged?.call(widget.controller.size);
+  }
+
+  void _tryLockSizes(BuildContext context) {
+    if (_lockedPhase == widget.phase && _lockedMin != null && _lockedMax != null) {
+      return;
+    }
+    if (!_sizes.isReadyFor(widget.phase)) return;
+
+    final minChildSize = HomeDriverSheet.isSingleSizePhase(widget.phase)
+        ? HomeDriverSheet.contentFitFraction(
+            context,
+            _sizes.expandedHeight,
+          )
+        : HomeDriverSheet.contentFitFraction(
+            context,
+            _sizes.collapsedHeight,
+          );
+    final maxChildSize = HomeDriverSheet.contentFitFraction(
+      context,
+      _sizes.expandedHeight,
+    );
+    final resolvedMin = HomeDriverSheet.isSingleSizePhase(widget.phase)
+        ? maxChildSize
+        : minChildSize.clamp(0.0, maxChildSize);
+
+    _lockedPhase = widget.phase;
+    _lockedMin = resolvedMin;
+    _lockedMax = maxChildSize;
+
+    final next = (minChildSize: resolvedMin, maxChildSize: maxChildSize);
+    if (_lastReportedSizes == null ||
+        (_lastReportedSizes!.minChildSize - next.minChildSize).abs() > 0.001 ||
+        (_lastReportedSizes!.maxChildSize - next.maxChildSize).abs() > 0.001) {
+      _lastReportedSizes = next;
+      widget.onSizesResolved?.call(next);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final snapSizes = snapSizesFor(
-      phase,
-      context,
-      activeOrderPhase: activeOrderPhase,
-    );
-    final maxChildSize = maxSizeFor(phase, context);
-    // Sürücü her zaman, tek dokunuşla haritaya odaklanabilmek için paneli
-    // küçültüp büyütebilmeli — bu yüzden kontrol her fazda görünür.
-    final showCollapseButton = !isCollapsed;
-    final showExpandButton = isCollapsed;
-
-    return DraggableScrollableSheet(
-      controller: controller,
-      initialChildSize: initialChildSize.clamp(minSize, maxChildSize),
-      minChildSize: minSize,
-      maxChildSize: maxChildSize,
-      snap: true,
-      snapSizes: snapSizes,
-      builder: (context, scrollController) {
-        return DecoratedBox(
-          decoration: BoxDecoration(
-            color: ColorConst.white,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-            boxShadow: [
-              BoxShadow(
-                color: ColorConst.black.withValues(alpha: 0.08),
-                blurRadius: 24,
-                offset: const Offset(0, -4),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return Stack(
+          clipBehavior: Clip.none,
+          children: [
+            if (_lockedPhase != widget.phase)
+              Positioned(
+                top: -8000,
+                left: 0,
+                width: constraints.maxWidth,
+                child: IgnorePointer(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (!HomeDriverSheet.isSingleSizePhase(widget.phase))
+                        _MeasureSize(
+                          onHeight: _sizes.updateCollapsed,
+                          child: widget.measureCollapsed,
+                        ),
+                      _MeasureSize(
+                        onHeight: _sizes.updateExpanded,
+                        child: widget.measureExpanded,
+                      ),
+                    ],
+                  ),
+                ),
               ),
-            ],
-          ),
-          child: _ResizableSheetBody(
-            controller: controller,
-            snapSizes: snapSizes,
-            minSize: minSize,
-            maxSize: maxChildSize,
-            showCollapseButton: showCollapseButton,
-            showExpandButton: showExpandButton,
-            onCollapse: onCollapse,
-            onExpand: onExpand,
-            child: child,
-          ),
+            Builder(
+              builder: (context) {
+                if (_lockedPhase != widget.phase) {
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (mounted) _tryLockSizes(context);
+                  });
+                }
+
+                final minChildSize = _lockedMin ??
+                    HomeDriverSheet.contentFitFraction(
+                      context,
+                      HomeDriverSheet.fallbackCollapsedHeight,
+                    );
+                final maxChildSize = _lockedMax ??
+                    HomeDriverSheet.contentFitFraction(
+                      context,
+                      HomeDriverSheet.fallbackExpandedHeight,
+                    );
+                final snapSizes = HomeDriverSheet.snapSizesFor(
+                  phase: widget.phase,
+                  minChildSize: minChildSize,
+                  maxChildSize: maxChildSize,
+                );
+                final initialSize =
+                    widget.initialChildSize.clamp(minChildSize, maxChildSize);
+
+                return DraggableScrollableSheet(
+                  controller: widget.controller,
+                  initialChildSize: initialSize,
+                  minChildSize: minChildSize,
+                  maxChildSize: maxChildSize,
+                  snap: snapSizes.length > 1,
+                  snapSizes: snapSizes,
+                  builder: (context, scrollController) {
+                    return DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: ColorConst.white,
+                        borderRadius: const BorderRadius.vertical(
+                          top: Radius.circular(24),
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: ColorConst.black.withValues(alpha: 0.08),
+                            blurRadius: 24,
+                            offset: const Offset(0, -4),
+                          ),
+                        ],
+                      ),
+                      child: CustomScrollView(
+                        controller: scrollController,
+                        physics: const _SheetScrollPhysics(),
+                        slivers: [
+                          const SliverToBoxAdapter(child: _SheetDragZone()),
+                          SliverToBoxAdapter(
+                            child: Padding(
+                              padding: EdgeInsets.only(
+                                bottom: MediaQuery.paddingOf(context).bottom,
+                              ),
+                              child: widget.child,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          ],
         );
       },
     );
   }
 }
 
-/// Panelin tamamı (başlık + içerik) için tek elden boyutlandırma/kaydırma.
-///
-/// [DraggableScrollableSheet]'in varsayılan davranışı, boyutlandırmayı
-/// içerideki [ScrollController] üzerinden yönetir: kaydırılabilir içerik en
-/// üstte (offset 0) değilse aşağı sürükleme paneli küçültmek yerine içeriği
-/// kaydırır. Bu da yalnızca panelin en üstünden (tutamaçtan) sürüklemenin
-/// güvenilir çalışması, panelin herhangi bir yerinden sürüklemenin ise
-/// tutarsız olması gibi görünür.
-///
-/// Burada tek bir [GestureDetector] panelin tüm yüzeyini (başlık + içerik)
-/// kaplar ve dikey sürüklemeyi doğrudan [controller] üzerinden uygular.
-/// Bu sayede kullanıcı parmağını panelin herhangi bir noktasına koyabilir;
-/// içerideki [Scrollable] tabanlı bir widget'a bağlı kalınmadığı için
-/// gesture arenasında rekabet/belirsizlik oluşmaz. Bu ekrandaki kartların
-/// hiçbiri panel maksimum yükseklikte (`maxSize`) taşacak kadar uzun
-/// olmadığından içerik için ayrı bir kaydırma mekanizmasına gerek yoktur.
-class _ResizableSheetBody extends StatefulWidget {
-  const _ResizableSheetBody({
-    required this.controller,
-    required this.snapSizes,
-    required this.minSize,
-    required this.maxSize,
-    required this.showCollapseButton,
-    required this.showExpandButton,
-    required this.child,
-    this.onCollapse,
-    this.onExpand,
-  });
+class _SheetDragZone extends StatelessWidget {
+  const _SheetDragZone();
 
-  final DraggableScrollableController controller;
-  final List<double> snapSizes;
-  final double minSize;
-  final double maxSize;
-  final bool showCollapseButton;
-  final bool showExpandButton;
-  final Widget child;
-  final VoidCallback? onCollapse;
-  final VoidCallback? onExpand;
-
-  @override
-  State<_ResizableSheetBody> createState() => _ResizableSheetBodyState();
-}
-
-class _ResizableSheetBodyState extends State<_ResizableSheetBody> {
-  static const _flingVelocityThreshold = 300.0;
-
-  void _onVerticalDragUpdate(DragUpdateDetails details) {
-    if (!widget.controller.isAttached) return;
-    final screenHeight = MediaQuery.sizeOf(context).height;
-    final delta = details.primaryDelta ?? 0;
-    if (delta == 0) return;
-
-    final size = widget.controller.size;
-    final next = (size - delta / screenHeight).clamp(
-      widget.minSize,
-      widget.maxSize,
-    );
-    if (next == size) return;
-    widget.controller.jumpTo(next);
-  }
-
-  void _onVerticalDragEnd(DragEndDetails details) {
-    if (!widget.controller.isAttached) return;
-    final velocity = details.primaryVelocity ?? 0;
-    final target = _nearestSnap(widget.controller.size, velocity);
-    widget.controller.animateTo(
-      target,
-      duration: const Duration(milliseconds: 220),
-      curve: Curves.easeOut,
-    );
-  }
-
-  double _nearestSnap(double size, double velocity) {
-    final sorted = [...widget.snapSizes]..sort();
-    if (velocity.abs() > _flingVelocityThreshold) {
-      if (velocity < 0) {
-        return sorted.firstWhere((s) => s > size, orElse: () => sorted.last);
-      }
-      return sorted.lastWhere((s) => s < size, orElse: () => sorted.first);
-    }
-    return sorted.reduce(
-      (a, b) => (a - size).abs() <= (b - size).abs() ? a : b,
-    );
-  }
+  static const totalHeight = 52.0;
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onVerticalDragUpdate: _onVerticalDragUpdate,
-      onVerticalDragEnd: _onVerticalDragEnd,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _SheetHeader(
-            showCollapseButton: widget.showCollapseButton,
-            showExpandButton: widget.showExpandButton,
-            onCollapse: widget.onCollapse,
-            onExpand: widget.onExpand,
-          ),
-          Expanded(
-            child: ClipRect(child: widget.child),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _SheetHeader extends StatelessWidget {
-  const _SheetHeader({
-    required this.showCollapseButton,
-    required this.showExpandButton,
-    this.onCollapse,
-    this.onExpand,
-  });
-
-  final bool showCollapseButton;
-  final bool showExpandButton;
-  final VoidCallback? onCollapse;
-  final VoidCallback? onExpand;
-
-  @override
-  Widget build(BuildContext context) {
-    final showControl = showCollapseButton || showExpandButton;
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
-      child: Row(
-        children: [
-          const SizedBox(width: 36),
-          Expanded(
-            child: Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: ColorConst.lightGrey,
-                  borderRadius: BorderRadius.circular(2),
-                ),
+    return Semantics(
+      label: 'Resize sheet',
+      container: true,
+      child: SizedBox(
+        height: totalHeight,
+        width: double.infinity,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: ColorConst.lightGrey,
+                borderRadius: BorderRadius.circular(2),
               ),
             ),
-          ),
-          if (showControl)
-            _SheetControlButton(
-              icon: showExpandButton
-                  ? Icons.keyboard_arrow_up
-                  : Icons.keyboard_arrow_down,
-              onPressed: showExpandButton ? onExpand : onCollapse,
-            )
-          else
-            const SizedBox(width: 36),
-        ],
-      ),
-    );
-  }
-}
-
-class _SheetControlButton extends StatelessWidget {
-  const _SheetControlButton({
-    required this.icon,
-    this.onPressed,
-  });
-
-  final IconData icon;
-  final VoidCallback? onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: ColorConst.lightGrey,
-      shape: const CircleBorder(),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onPressed,
-        child: SizedBox(
-          width: 36,
-          height: 36,
-          child: Icon(icon, size: 22, color: ColorConst.black),
+          ],
         ),
       ),
     );
+  }
+}
+
+class _SheetScrollPhysics extends ClampingScrollPhysics {
+  const _SheetScrollPhysics({super.parent});
+
+  @override
+  _SheetScrollPhysics applyTo(ScrollPhysics? ancestor) {
+    return _SheetScrollPhysics(parent: buildParent(ancestor));
+  }
+
+  @override
+  double applyBoundaryConditions(ScrollMetrics position, double value) {
+    if (value < position.pixels &&
+        position.pixels <= position.minScrollExtent) {
+      return value - position.pixels;
+    }
+    return super.applyBoundaryConditions(position, value);
+  }
+}
+
+class _SheetSizesNotifier extends ChangeNotifier {
+  double collapsedHeight = 0;
+  double expandedHeight = 0;
+
+  bool isReadyFor(HomeSheetPhase phase) {
+    if (expandedHeight <= 0) return false;
+    if (HomeDriverSheet.isSingleSizePhase(phase)) return true;
+    return collapsedHeight > 0;
+  }
+
+  void reset() {
+    collapsedHeight = 0;
+    expandedHeight = 0;
+    notifyListeners();
+  }
+
+  void updateCollapsed(double height) {
+    if (height <= 0 || (height - collapsedHeight).abs() < 1) return;
+    collapsedHeight = height;
+    notifyListeners();
+  }
+
+  void updateExpanded(double height) {
+    if (height <= 0 || (height - expandedHeight).abs() < 1) return;
+    expandedHeight = height;
+    notifyListeners();
+  }
+}
+
+class _MeasureSize extends StatefulWidget {
+  const _MeasureSize({
+    required this.onHeight,
+    required this.child,
+  });
+
+  final ValueChanged<double> onHeight;
+  final Widget child;
+
+  @override
+  State<_MeasureSize> createState() => _MeasureSizeState();
+}
+
+class _MeasureSizeState extends State<_MeasureSize> {
+  final GlobalKey _key = GlobalKey();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _reportSize());
+  }
+
+  @override
+  void didUpdateWidget(_MeasureSize oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _reportSize());
+  }
+
+  void _reportSize() {
+    final context = _key.currentContext;
+    if (context == null) return;
+    final renderBox = context.findRenderObject() as RenderBox?;
+    if (renderBox == null || !renderBox.hasSize) return;
+    widget.onHeight(renderBox.size.height);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    WidgetsBinding.instance.addPostFrameCallback((_) => _reportSize());
+    return KeyedSubtree(key: _key, child: widget.child);
   }
 }

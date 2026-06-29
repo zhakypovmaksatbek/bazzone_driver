@@ -7,4 +7,6 @@ class ColorConst {
   static const Color grey = Color(0xFF676767);
   static const Color lightGrey = Color(0xFFF2F2F7);
   static const Color error = Color(0xFFEE0000);
+  static const Color success = Color(0xFF34C759);
+  static const Color info = Color(0xFF007AFF);
 }

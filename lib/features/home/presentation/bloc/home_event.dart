@@ -1,4 +1,5 @@
 import 'package:bazzone_driver/features/home/domain/entities/order.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 sealed class HomeEvent {
   const HomeEvent();
@@ -30,6 +31,12 @@ final class HomeAdvanceOrderRequested extends HomeEvent {
 
 final class HomeCompleteOrderRequested extends HomeEvent {
   const HomeCompleteOrderRequested();
+}
+
+final class HomeLocationUpdated extends HomeEvent {
+  const HomeLocationUpdated(this.location);
+
+  final LatLng location;
 }
 
 /// WebSocket / SSE üzerinden gelen sipariş teklifi.

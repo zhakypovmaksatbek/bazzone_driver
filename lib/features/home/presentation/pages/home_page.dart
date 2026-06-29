@@ -3,8 +3,9 @@ import 'package:bazzone_driver/core/constants/asset_const.dart';
 import 'package:bazzone_driver/core/constants/map_const.dart';
 import 'package:bazzone_driver/core/di/injection.dart';
 import 'package:bazzone_driver/core/theme/color_const.dart';
+import 'package:bazzone_driver/features/home/domain/entities/driver_session.dart';
 import 'package:bazzone_driver/features/home/domain/entities/home_sheet_phase.dart';
-import 'package:bazzone_driver/features/home/domain/entities/order_status.dart';
+import 'package:bazzone_driver/features/home/domain/entities/order.dart';
 import 'package:bazzone_driver/features/home/presentation/bloc/home_bloc.dart';
 import 'package:bazzone_driver/features/home/presentation/widgets/home_driver_sheet.dart';
 import 'package:bazzone_driver/features/home/presentation/widgets/home_map_top_bar.dart';
@@ -44,9 +45,22 @@ class _HomeViewState extends State<_HomeView> {
   LatLng _currentPosition = MapConst.defaultLocation;
   final String _address = MapConst.defaultAddress;
   bool _isMapReady = false;
-  double _sheetExtent = HomeDriverSheet.minSize;
+  double _sheetExtent = 0.45;
+  double _minChildSize = 0.12;
+  double _maxChildSize = 0.85;
   HomeSheetPhase? _lastSheetPhase;
-  ActiveOrderPhase? _lastActiveOrderPhase;
+  ActiveOrderPhase? _lastActivePhase;
+  bool _shouldAnimateToMaxAfterResolve = false;
+  bool _isPaidWaiting = false;
+
+  String _getOverlayBannerText(ActiveOrderPhase phase) {
+    return switch (phase) {
+      ActiveOrderPhase.headingToClient => 'Ехать 4 мин',
+      ActiveOrderPhase.waitingForClient => _isPaidWaiting ? 'Начинается платное ожидание' : 'Вы на месте',
+      ActiveOrderPhase.headingToDestination => 'Ехать 4 мин',
+      ActiveOrderPhase.completed => '',
+    };
+  }
 
   @override
   void initState() {
@@ -77,10 +91,29 @@ class _HomeViewState extends State<_HomeView> {
     });
   }
 
+  void _onSizesResolved(HomeSheetSizes sizes) {
+    final minChanged = (sizes.minChildSize - _minChildSize).abs() > 0.001;
+    final maxChanged = (sizes.maxChildSize - _maxChildSize).abs() > 0.001;
+
+    if (minChanged || maxChanged) {
+      setState(() {
+        _minChildSize = sizes.minChildSize;
+        _maxChildSize = sizes.maxChildSize;
+      });
+    }
+
+    if (_shouldAnimateToMaxAfterResolve) {
+      _shouldAnimateToMaxAfterResolve = false;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _animateSheetTo(sizes.maxChildSize);
+      });
+    }
+  }
+
   Future<void> _animateSheetTo(double size) async {
     if (!_sheetController.isAttached) return;
     await _sheetController.animateTo(
-      size,
+      size.clamp(_minChildSize, _maxChildSize),
       duration: const Duration(milliseconds: 280),
       curve: Curves.easeOut,
     );
@@ -126,46 +159,36 @@ class _HomeViewState extends State<_HomeView> {
     _animateToCurrentPosition();
   }
 
-  void _onSheetPhaseChanged(
-    HomeSheetPhase phase,
-    ActiveOrderPhase? activeOrderPhase,
-  ) {
-    if (_lastSheetPhase == phase &&
-        _lastActiveOrderPhase == activeOrderPhase) {
-      return;
-    }
+  void _onSheetPhaseChanged(HomeSheetPhase phase) {
+    if (_lastSheetPhase == phase) return;
     _lastSheetPhase = phase;
-    _lastActiveOrderPhase = activeOrderPhase;
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted || !_sheetController.isAttached) return;
-      _animateSheetTo(
-        HomeDriverSheet.targetSizeFor(
-          phase,
-          context,
-          activeOrderPhase: activeOrderPhase,
-        ),
-      );
-    });
   }
 
-  void _expandSheetForPhase(
-    HomeSheetPhase phase,
-    ActiveOrderPhase? activeOrderPhase,
-  ) {
+  void _expandSheet() {
     if (!_sheetController.isAttached) return;
-    _animateSheetTo(
-      HomeDriverSheet.targetSizeFor(
-        phase,
-        context,
-        activeOrderPhase: activeOrderPhase,
-      ),
+    _animateSheetTo(_maxChildSize);
+  }
+
+  HomeSheetContent _buildSheetContent({
+    required DriverSession session,
+    required bool isBusy,
+    required HomeAction action,
+    required bool isExpanded,
+  }) {
+    return HomeSheetContent(
+      session: session,
+      isBusy: isBusy,
+      action: action,
+      isExpanded: isExpanded,
+      onExpandSheet: _expandSheet,
+      onWaitingStateChanged: (val) {
+        if (val != _isPaidWaiting) {
+          setState(() {
+            _isPaidWaiting = val;
+          });
+        }
+      },
     );
-  }
-
-  void _collapseSheet() {
-    if (!_sheetController.isAttached) return;
-    _animateSheetTo(HomeDriverSheet.minSize);
   }
 
   @override
@@ -173,33 +196,49 @@ class _HomeViewState extends State<_HomeView> {
     return BlocConsumer<HomeBloc, HomeState>(
       listenWhen: (previous, current) =>
           previous.sheetPhase != current.sheetPhase ||
+          previous.errorMessage != current.errorMessage ||
           previous.session?.activeOrder?.activePhase !=
-              current.session?.activeOrder?.activePhase ||
-          previous.errorMessage != current.errorMessage,
+              current.session?.activeOrder?.activePhase,
       listener: (context, state) {
         if (state.errorMessage != null) {
           ScaffoldMessenger.of(
             context,
           ).showSnackBar(SnackBar(content: Text(state.errorMessage!)));
         }
+
         final phase = state.sheetPhase;
-        if (phase != null) {
-          _onSheetPhaseChanged(phase, state.session?.activeOrder?.activePhase);
+        if (phase == null) return;
+
+        final activePhase = state.session?.activeOrder?.activePhase;
+
+        if (phase != _lastSheetPhase) {
+          _lastActivePhase = activePhase;
+          _shouldAnimateToMaxAfterResolve = true;
+          _isPaidWaiting = false;
+          _onSheetPhaseChanged(phase);
+          return;
+        }
+
+        if (activePhase != null && activePhase != _lastActivePhase) {
+          _lastActivePhase = activePhase;
+          _shouldAnimateToMaxAfterResolve = true;
+          _isPaidWaiting = false;
+          setState(() {});
         }
       },
       builder: (context, state) {
         final session = state.session;
         final sheetPhase = session?.sheetPhase ?? HomeSheetPhase.driverSummary;
-        final activeOrderPhase = session?.activeOrder?.activePhase;
         final fallbackExtent = HomeDriverSheet.targetSizeFor(
           sheetPhase,
           context,
-          activeOrderPhase: activeOrderPhase,
         );
         final sheetExtent = _sheetController.isAttached
             ? _sheetExtent
             : fallbackExtent;
-        final isSheetCollapsed = HomeDriverSheet.isCollapsedExtent(sheetExtent);
+        final isSheetExpanded = HomeDriverSheet.isSingleSizePhase(sheetPhase)
+            ? true
+            : (sheetExtent - _minChildSize) > (_maxChildSize - _minChildSize) * 0.5;
 
         if (state.status == HomeStatus.loading && session == null) {
           return const Scaffold(
@@ -212,6 +251,13 @@ class _HomeViewState extends State<_HomeView> {
             body: Center(child: CircularProgressIndicator()),
           );
         }
+
+        final sheetContent = _buildSheetContent(
+          session: session,
+          isBusy: state.isBusy,
+          action: state.action,
+          isExpanded: isSheetExpanded,
+        );
 
         return Scaffold(
           backgroundColor: ColorConst.white,
@@ -252,23 +298,83 @@ class _HomeViewState extends State<_HomeView> {
                       onPressed: _animateToCurrentPosition,
                     ),
                   ),
+                  if (session.activeOrder != null &&
+                      session.activeOrder!.activePhase != ActiveOrderPhase.completed)
+                    Positioned(
+                      left: 16,
+                      right: 80,
+                      bottom: mapBottomPadding + 16,
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 48,
+                            height: 48,
+                            decoration: BoxDecoration(
+                              color: ColorConst.white,
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.1),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: IconButton(
+                              icon: const Icon(Icons.chevron_left, color: ColorConst.black, size: 28),
+                              onPressed: () {
+                                _animateSheetTo(_minChildSize);
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Container(
+                              height: 48,
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                color: ColorConst.white,
+                                borderRadius: BorderRadius.circular(24),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.1),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: Text(
+                                _getOverlayBannerText(session.activeOrder!.activePhase),
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
+                                  color: ColorConst.black,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   HomeDriverSheet(
                     controller: _sheetController,
                     phase: sheetPhase,
-                    activeOrderPhase: activeOrderPhase,
+                    stateKey: session.activeOrder?.activePhase,
                     initialChildSize: fallbackExtent,
-                    isCollapsed: isSheetCollapsed,
-                    onCollapse: _collapseSheet,
-                    onExpand: () =>
-                        _expandSheetForPhase(sheetPhase, activeOrderPhase),
-                    child: HomeSheetContent(
+                    onSizesResolved: _onSizesResolved,
+                    measureCollapsed: _buildSheetContent(
                       session: session,
                       isBusy: state.isBusy,
                       action: state.action,
-                      isCollapsed: isSheetCollapsed,
-                      onExpandSheet: () =>
-                          _expandSheetForPhase(sheetPhase, activeOrderPhase),
+                      isExpanded: false,
                     ),
+                    measureExpanded: _buildSheetContent(
+                      session: session,
+                      isBusy: state.isBusy,
+                      action: state.action,
+                      isExpanded: true,
+                    ),
+                    child: sheetContent,
                   ),
                 ],
               );

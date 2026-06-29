@@ -7,11 +7,13 @@ class HomeOrderCollapsedPanel extends StatelessWidget {
     super.key,
     required this.order,
     this.statusLabel,
+    this.statusColor = ColorConst.info,
     this.onTap,
   });
 
   final Order order;
   final String? statusLabel;
+  final Color statusColor;
   final VoidCallback? onTap;
 
   @override
@@ -19,55 +21,52 @@ class HomeOrderCollapsedPanel extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
       child: Material(
-        color: Colors.transparent,
+        color: ColorConst.lightGrey.withValues(alpha: 0.25),
+        borderRadius: BorderRadius.circular(16),
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(16),
           child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             child: Row(
               children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      if (statusLabel != null) ...[
-                        Text(
-                          statusLabel!,
-                          style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: ColorConst.primary,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                      ],
-                      Text(
-                        '${order.pickupAddress} → ${order.destinationAddress}',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: ColorConst.black,
-                        ),
-                      ),
-                    ],
+                if (statusLabel != null) ...[
+                  Container(
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: statusColor,
+                      shape: BoxShape.circle,
+                    ),
                   ),
-                ),
-                const SizedBox(width: 12),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      statusLabel!,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: statusColor,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                ],
                 Text(
                   order.price,
                   style: const TextStyle(
                     fontSize: 16,
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.w800,
                     color: ColorConst.black,
                   ),
                 ),
-                const SizedBox(width: 4),
+                const SizedBox(width: 8),
                 Icon(
                   Icons.keyboard_arrow_up,
-                  color: ColorConst.grey.withValues(alpha: 0.6),
+                  color: ColorConst.grey.withValues(alpha: 0.8),
+                  size: 20,
                 ),
               ],
             ),

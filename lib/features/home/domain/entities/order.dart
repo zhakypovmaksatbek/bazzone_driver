@@ -16,7 +16,8 @@ class Order {
     required this.status,
     this.customerAvatarUrl,
     this.commentTags = const [],
-    this.activePhase = ActiveOrderPhase.accepted,
+    this.activePhase = ActiveOrderPhase.headingToClient,
+    this.offerTimeoutSeconds = 20,
   });
 
   final String id;
@@ -32,6 +33,7 @@ class Order {
   final List<String> commentTags;
   final OrderStatus status;
   final ActiveOrderPhase activePhase;
+  final int offerTimeoutSeconds;
 
   bool get isOffer => status == OrderStatus.offered;
   bool get isActive => status == OrderStatus.active;
@@ -39,6 +41,7 @@ class Order {
   Order copyWith({
     OrderStatus? status,
     ActiveOrderPhase? activePhase,
+    int? offerTimeoutSeconds,
   }) {
     return Order(
       id: id,
@@ -54,6 +57,7 @@ class Order {
       commentTags: commentTags,
       status: status ?? this.status,
       activePhase: activePhase ?? this.activePhase,
+      offerTimeoutSeconds: offerTimeoutSeconds ?? this.offerTimeoutSeconds,
     );
   }
 
@@ -68,7 +72,8 @@ class Order {
     distanceToClientKm: 0.7,
     distanceToPointKm: 4,
     customerRating: 4.7,
-    customerName: 'Client',
+    customerName: 'Таңсулуу',
+    customerAvatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&fit=crop',
     status: OrderStatus.offered,
     commentTags: ['С ребенком', 'Нужна помощь', 'Перевоз животных'],
   );

@@ -41,8 +41,13 @@ abstract class  LocaleKeys {
   static const home_page_en_route_to_destination = 'home_page.en_route_to_destination';
   static const home_page_arrived_at_client = 'home_page.arrived_at_client';
   static const home_page_complete_order = 'home_page.complete_order';
-  static const home_page_searching_orders = 'home_page.searching_orders';
-  static const home_page_searching_orders_hint = 'home_page.searching_orders_hint';
+  static const home_page_new_order = 'home_page.new_order';
+  static const home_page_online = 'home_page.online';
+  static const home_page_accept_order = 'home_page.accept_order';
+  static const home_page_arrived = 'home_page.arrived';
+  static const home_page_pickup_point = 'home_page.pickup_point';
+  static const home_page_destination_point = 'home_page.destination_point';
+  static const home_page_seconds_short = 'home_page.seconds_short';
   static const home_page_order_accepted = 'home_page.order_accepted';
   static const home_page_depart = 'home_page.depart';
   static const home_page = 'home_page';
