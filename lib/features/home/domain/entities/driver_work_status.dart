@@ -1,0 +1,1 @@
+enum DriverWorkStatus { offline, online }

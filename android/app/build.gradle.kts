@@ -4,6 +4,12 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+val localProperties = java.util.Properties()
+val localPropertiesFile = rootProject.file("local.properties")
+if (localPropertiesFile.exists()) {
+    localPropertiesFile.load(localPropertiesFile.inputStream())
+}
+
 android {
     namespace = "com.tatadev.bazzone_driver"
     compileSdk = flutter.compileSdkVersion
@@ -23,6 +29,8 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        manifestPlaceholders["GOOGLE_MAPS_API_KEY"] =
+            localProperties.getProperty("google.maps.api.key", "")
     }
 
     buildTypes {
