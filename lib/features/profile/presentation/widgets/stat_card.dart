@@ -1,6 +1,6 @@
 import 'dart:math' as math;
 
-import 'package:bazzone_driver/core/theme/color_const.dart';
+import 'package:bazzone_driver/shared/widgets/image/custom_asset_image.dart';
 import 'package:flutter/material.dart';
 
 class StatCard extends StatelessWidget {
@@ -9,226 +9,181 @@ class StatCard extends StatelessWidget {
     required this.label,
     required this.value,
     required this.icon,
-    this.iconColor = ColorConst.black,
-    this.iconWidget,
   });
 
   final String label;
   final String value;
-  final IconData icon;
-  final Color iconColor;
-  final Widget? iconWidget;
+  final String icon;
 
-  static const badgeSize = 38.0;
-  static const cardRadius = 20.0;
+  static const badgeSize = 28.0;
+  static const radius = 20.0;
+  static const gap = 4.0;
+  static const fillet = 10.0;
 
   @override
   Widget build(BuildContext context) {
-    final notchRadius = badgeSize / 2;
+    const cardColor = Color(0xFFF3F4F8);
 
-    return Stack(
-      clipBehavior: Clip.none,
-      alignment: Alignment.topRight,
-      children: [
-        ClipPath(
-          clipper: _NotchedCardClipper(
-            radius: cardRadius,
-            notchRadius: notchRadius,
-          ),
-          child: Container(
-            width: double.infinity,
-            height: 96,
-            color: const Color(0xFFF1F1F4),
-            padding: const EdgeInsets.fromLTRB(14, 16, 14, 14),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: ColorConst.grey.withValues(alpha: 0.85),
-                    fontSize: 13,
-                    fontWeight: FontWeight.w400,
-                    height: 1.2,
-                  ),
-                ),
-                const Spacer(),
-                SizedBox(
-                  width: double.infinity,
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      value,
-                      maxLines: 1,
-                      softWrap: false,
-                      style: const TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.w800,
-                        color: ColorConst.black,
-                        height: 1.1,
-                      ),
+    return SizedBox(
+      height: 60,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          ClipPath(
+            clipper: _ProfileCardClipper(
+              radius: radius,
+              badgeSize: badgeSize,
+              gap: gap,
+              fillet: fillet,
+            ),
+            child: Container(
+              width: double.infinity,
+              color: cardColor,
+              padding: const EdgeInsets.fromLTRB(12, 6, 12, 6),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: const TextStyle(
+                      color: Color(0xFF8B8E99),
+                      fontSize: 13,
+                      fontWeight: FontWeight.w400,
+                      height: 16 / 13,
+                      letterSpacing: 0,
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                ),
-              ],
+                  const Spacer(),
+                  Text(
+                    value,
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF141518),
+                      height: 25 / 20,
+                      letterSpacing: 0,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
-        Positioned(
-          top: 0,
-          right: 0,
-          child: _StatBadge(
-            child: iconWidget ??
-                Icon(
-                  icon,
-                  color: iconColor,
-                  size: 18,
+          Positioned(
+            top: 0,
+            right: 0,
+            child: Container(
+              width: badgeSize,
+              height: badgeSize,
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                color: cardColor,
+              ),
+              child: Center(
+                child: SizedBox(
+                  width: badgeSize * 0.55,
+                  height: badgeSize * 0.55,
+                  child: CustomAssetImage(path: icon),
                 ),
+              ),
+            ),
           ),
-        ),
-      ],
-    );
-  }
-}
-
-class _StatBadge extends StatelessWidget {
-  const _StatBadge({required this.child});
-
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: StatCard.badgeSize,
-      height: StatCard.badgeSize,
-      decoration: BoxDecoration(
-        color: const Color(0xFFF1F1F4),
-        shape: BoxShape.circle,
-        border: Border.all(
-          color: ColorConst.white,
-          width: 3,
-        ),
+        ],
       ),
-      child: Center(child: child),
     );
   }
 }
 
-class SteeringWheelIcon extends StatelessWidget {
-  const SteeringWheelIcon({
-    super.key,
-    this.size = 18,
-    this.color = ColorConst.black,
-  });
-
-  final double size;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return CustomPaint(
-      size: Size(size, size),
-      painter: _SteeringWheelPainter(color: color),
-    );
-  }
-}
-
-class _SteeringWheelPainter extends CustomPainter {
-  _SteeringWheelPainter({required this.color});
-
-  final Color color;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final stroke = Paint()
-      ..color = color
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = size.width * 0.11
-      ..strokeCap = StrokeCap.round;
-
-    final fillPaint = Paint()
-      ..color = color
-      ..style = PaintingStyle.fill;
-
-    final center = Offset(size.width / 2, size.height / 2);
-    final radius = size.width * 0.38;
-
-    // Outer ring
-    canvas.drawCircle(center, radius, stroke);
-
-    // Center hub
-    canvas.drawCircle(center, size.width * 0.15, fillPaint);
-
-    // Spokes oriented with one pointing straight down (6 o'clock)
-    for (var i = 0; i < 3; i++) {
-      final angle = math.pi / 2 + i * 2 * math.pi / 3;
-      final end = Offset(
-        center.dx + radius * math.cos(angle),
-        center.dy + radius * math.sin(angle),
-      );
-      canvas.drawLine(center, end, stroke);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _SteeringWheelPainter oldDelegate) {
-    return color != oldDelegate.color;
-  }
-}
-
-class _NotchedCardClipper extends CustomClipper<Path> {
-  const _NotchedCardClipper({
+class _ProfileCardClipper extends CustomClipper<Path> {
+  const _ProfileCardClipper({
     required this.radius,
-    required this.notchRadius,
+    required this.badgeSize,
+    required this.gap,
+    required this.fillet,
   });
 
   final double radius;
-  final double notchRadius;
+  final double badgeSize;
+  final double gap;
+  final double fillet;
 
   @override
   Path getClip(Size size) {
+    final w = size.width;
+    final h = size.height;
+
+    final rb = badgeSize / 2;
+    final rcut = rb + gap;
+    final rf = fillet;
+
+    // Distances
+    final distSq = (rf + rcut) * (rf + rcut) - (rcut - rf) * (rcut - rf);
+    double dist = math.sqrt(math.max(0.0, distSq));
+
+    // Safety checks to prevent the cutout from overlapping corners
+    if (rb + dist > h - radius) {
+      dist = math.max(0.0, h - radius - rb);
+    }
+    if (w - rb - dist < radius) {
+      dist = math.max(0.0, w - rb - radius);
+    }
+
+    // Centers
+    final cg = Offset(w - rb, rb);
+    final cf1 = Offset(w - rb - dist, rf);
+    final cf2 = Offset(w - rf, rb + dist);
+
+    // Contact points
+    final p1 = cf1 + (cg - cf1) * (rf / (rf + rcut));
+    final p2 = cf2 + (cg - cf2) * (rf / (rf + rcut));
+
     final path = Path();
-    final width = size.width;
-    final height = size.height;
 
-    // Move to starting point on the left edge
+    // Top Left
     path.moveTo(0, radius);
-
-    // Top-left corner
     path.arcToPoint(
       Offset(radius, 0),
       radius: Radius.circular(radius),
-    );
-
-    // Top edge to the start of the notch
-    path.lineTo(width - notchRadius, 0);
-
-    // Notch (concave quarter-circle curving inwards)
-    path.arcToPoint(
-      Offset(width, notchRadius),
-      radius: Radius.circular(notchRadius),
       clockwise: true,
     );
 
-    // Right edge to bottom-right corner
-    path.lineTo(width, height - radius);
+    // Top edge to first fillet
+    path.lineTo(cf1.dx, 0);
 
-    // Bottom-right corner
+    // Top fillet
+    path.arcToPoint(p1, radius: Radius.circular(rf), clockwise: true);
+
+    // Cutout
+    path.arcToPoint(p2, radius: Radius.circular(rcut), clockwise: false);
+
+    // Right fillet
     path.arcToPoint(
-      Offset(width - radius, height),
-      radius: Radius.circular(radius),
+      Offset(w, cf2.dy),
+      radius: Radius.circular(rf),
+      clockwise: true,
     );
 
-    // Bottom edge to bottom-left corner
-    path.lineTo(radius, height);
+    // Right edge to bottom
+    path.lineTo(w, h - radius);
 
-    // Bottom-left corner
+    // Bottom Right
     path.arcToPoint(
-      Offset(0, height - radius),
+      Offset(w - radius, h),
       radius: Radius.circular(radius),
+      clockwise: true,
+    );
+
+    // Bottom edge
+    path.lineTo(radius, h);
+
+    // Bottom Left
+    path.arcToPoint(
+      Offset(0, h - radius),
+      radius: Radius.circular(radius),
+      clockwise: true,
     );
 
     path.close();
@@ -236,7 +191,10 @@ class _NotchedCardClipper extends CustomClipper<Path> {
   }
 
   @override
-  bool shouldReclip(covariant _NotchedCardClipper oldClipper) {
-    return radius != oldClipper.radius || notchRadius != oldClipper.notchRadius;
+  bool shouldReclip(covariant _ProfileCardClipper oldClipper) {
+    return radius != oldClipper.radius ||
+        badgeSize != oldClipper.badgeSize ||
+        gap != oldClipper.gap ||
+        fillet != oldClipper.fillet;
   }
 }

@@ -68,8 +68,8 @@ enum UserAvatarSize {
   /// medium avatar size 48 font size 24
   medium(48, 24),
 
-  /// medium large avatar size 64 font size 28.8
-  mediumLarge(64, 28.8),
+  /// medium large avatar size 88 font size 38.8
+  mediumLarge(88, 38.8),
 
   /// large avatar size 120 font size 54
   large(120, 54);

@@ -24,8 +24,18 @@
 	<string>????</string>
 	<key>CFBundleVersion</key>
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
+	<key>GMSApiKey</key>
+	<string>$(GOOGLE_MAPS_API_KEY)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSLocalization</key>
+	<array>
+		<string>ru</string>
+	</array>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Приложению нужен доступ к геолокации для отображения вашего местоположения на карте.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Приложению нужен доступ к геолокации для отображения вашего местоположения на карте.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
@@ -66,15 +76,5 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
-	<key>NSLocalization</key>
-	<array>
-		<string>ru</string>
-	</array>
-	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Приложению нужен доступ к геолокации для отображения вашего местоположения на карте.</string>
-	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>Приложению нужен доступ к геолокации для отображения вашего местоположения на карте.</string>
-	<key>GMSApiKey</key>
-	<string>$(GOOGLE_MAPS_API_KEY)</string>
 </dict>
 </plist>

@@ -67,6 +67,8 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
+  static const EdgeInsets _cardPadding = EdgeInsets.fromLTRB(0, 16, 0, 0);
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -127,7 +129,7 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+              padding: _cardPadding,
               child: Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(16),
@@ -179,7 +181,7 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+              padding: _cardPadding,
               child: Container(
                 width: double.infinity,
                 decoration: BoxDecoration(
@@ -213,7 +215,7 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+              padding: _cardPadding,
               child: Container(
                 width: double.infinity,
                 decoration: BoxDecoration(

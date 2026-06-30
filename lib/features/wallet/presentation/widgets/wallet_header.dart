@@ -1,8 +1,10 @@
+import 'package:bazzone_driver/core/constants/asset_const.dart';
 import 'package:bazzone_driver/core/theme/color_const.dart';
 import 'package:bazzone_driver/features/wallet/presentation/utils/wallet_formatters.dart';
 import 'package:bazzone_driver/features/wallet/presentation/widgets/wallet_currency_text.dart';
 import 'package:bazzone_driver/features/wallet/presentation/widgets/wallet_month_badge.dart';
 import 'package:bazzone_driver/generated/locale_keys.g.dart';
+import 'package:bazzone_driver/shared/widgets/image/custom_asset_image.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
@@ -39,10 +41,7 @@ class WalletHeader extends StatelessWidget {
 }
 
 class _EarnedCard extends StatelessWidget {
-  const _EarnedCard({
-    required this.amount,
-    this.onTap,
-  });
+  const _EarnedCard({required this.amount, this.onTap});
 
   final String amount;
   final VoidCallback? onTap;
@@ -72,19 +71,7 @@ class _EarnedCard extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Container(
-                width: 32,
-                height: 32,
-                decoration: BoxDecoration(
-                  color: ColorConst.lightGrey,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Icon(
-                  Icons.arrow_upward_rounded,
-                  size: 18,
-                  color: ColorConst.black,
-                ),
-              ),
+              CustomAssetImage(path: AssetConst.sendArrow),
               const SizedBox(width: 10),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

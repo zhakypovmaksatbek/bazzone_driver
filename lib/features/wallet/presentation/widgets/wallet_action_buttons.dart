@@ -1,5 +1,7 @@
+import 'package:bazzone_driver/core/constants/asset_const.dart';
 import 'package:bazzone_driver/core/theme/color_const.dart';
 import 'package:bazzone_driver/generated/locale_keys.g.dart';
+import 'package:bazzone_driver/shared/widgets/image/custom_asset_image.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
@@ -22,7 +24,7 @@ class WalletActionButtons extends StatelessWidget {
         Expanded(
           child: _WalletActionButton(
             label: LocaleKeys.wallet_page_top_up.tr(),
-            icon: Icons.account_balance_wallet_outlined,
+            icon: AssetConst.cardReceived,
             isPrimary: true,
             onTap: onTopUpTap,
           ),
@@ -31,7 +33,7 @@ class WalletActionButtons extends StatelessWidget {
         Expanded(
           child: _WalletActionButton(
             label: LocaleKeys.wallet_page_my_cards.tr(),
-            icon: Icons.credit_card_outlined,
+            icon: AssetConst.wallet2,
             onTap: onCardsTap,
           ),
         ),
@@ -39,7 +41,7 @@ class WalletActionButtons extends StatelessWidget {
         Expanded(
           child: _WalletActionButton(
             label: LocaleKeys.wallet_page_more.tr(),
-            icon: Icons.more_horiz_rounded,
+            icon: AssetConst.moreCircle,
             onTap: onMoreTap,
           ),
         ),
@@ -57,14 +59,13 @@ class _WalletActionButton extends StatelessWidget {
   });
 
   final String label;
-  final IconData icon;
+  final String icon;
   final bool isPrimary;
   final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final backgroundColor = isPrimary ? ColorConst.primary : ColorConst.white;
-    final iconColor = isPrimary ? ColorConst.white : ColorConst.black;
     final labelColor = isPrimary ? ColorConst.primary : ColorConst.black;
 
     return Column(
@@ -78,7 +79,8 @@ class _WalletActionButton extends StatelessWidget {
             onTap: onTap,
             borderRadius: BorderRadius.circular(24),
             child: Container(
-              height: 88,
+              height: 56,
+              padding: EdgeInsets.all(16),
               width: double.infinity,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(24),
@@ -92,34 +94,7 @@ class _WalletActionButton extends StatelessWidget {
                         ),
                       ],
               ),
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  Icon(icon, size: 28, color: iconColor),
-                  if (isPrimary)
-                    Positioned(
-                      right: 28,
-                      bottom: 26,
-                      child: Container(
-                        width: 18,
-                        height: 18,
-                        decoration: BoxDecoration(
-                          color: ColorConst.white,
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: ColorConst.primary,
-                            width: 1.5,
-                          ),
-                        ),
-                        child: const Icon(
-                          Icons.add,
-                          size: 12,
-                          color: ColorConst.primary,
-                        ),
-                      ),
-                    ),
-                ],
-              ),
+              child: CustomAssetImage(path: icon),
             ),
           ),
         ),
