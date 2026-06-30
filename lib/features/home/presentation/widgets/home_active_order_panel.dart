@@ -254,7 +254,7 @@ class _HomeActiveOrderPanelState extends State<HomeActiveOrderPanel> {
               label: _swipeLabel,
               isLoading: widget.isLoading,
               color: ColorConst.primary,
-              textColor: ColorConst.white,
+              textColor: ColorConst.primary,
               onConfirmed: widget.onArrived ?? () {},
             ),
           ],

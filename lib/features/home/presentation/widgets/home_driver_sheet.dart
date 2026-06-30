@@ -109,7 +109,7 @@ class HomeDriverSheet extends StatefulWidget {
             );
           case ActiveOrderPhase.headingToDestination:
             return const HomeSheetConfig(
-              minSize: 0.13,
+              minSize: 0.14,
               maxSize: 0.45,
               initialSize: 0.45,
             );
