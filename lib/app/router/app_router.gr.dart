@@ -75,6 +75,22 @@ class OtpRoute extends PageRouteInfo<void> {
 }
 
 /// generated route for
+/// [ProfileCarsPage]
+class ProfileCarsRoute extends PageRouteInfo<void> {
+  const ProfileCarsRoute({List<PageRouteInfo>? children})
+    : super(ProfileCarsRoute.name, initialChildren: children);
+
+  static const String name = 'ProfileCarsRoute';
+
+  static PageInfo page = PageInfo(
+    name,
+    builder: (data) {
+      return const ProfileCarsPage();
+    },
+  );
+}
+
+/// generated route for
 /// [ProfilePage]
 class ProfileRoute extends PageRouteInfo<void> {
   const ProfileRoute({List<PageRouteInfo>? children})
@@ -86,6 +102,38 @@ class ProfileRoute extends PageRouteInfo<void> {
     name,
     builder: (data) {
       return const ProfilePage();
+    },
+  );
+}
+
+/// generated route for
+/// [ProfileTaxiParkPage]
+class ProfileTaxiParkRoute extends PageRouteInfo<void> {
+  const ProfileTaxiParkRoute({List<PageRouteInfo>? children})
+    : super(ProfileTaxiParkRoute.name, initialChildren: children);
+
+  static const String name = 'ProfileTaxiParkRoute';
+
+  static PageInfo page = PageInfo(
+    name,
+    builder: (data) {
+      return const ProfileTaxiParkPage();
+    },
+  );
+}
+
+/// generated route for
+/// [ProfileTripHistoryPage]
+class ProfileTripHistoryRoute extends PageRouteInfo<void> {
+  const ProfileTripHistoryRoute({List<PageRouteInfo>? children})
+    : super(ProfileTripHistoryRoute.name, initialChildren: children);
+
+  static const String name = 'ProfileTripHistoryRoute';
+
+  static PageInfo page = PageInfo(
+    name,
+    builder: (data) {
+      return const ProfileTripHistoryPage();
     },
   );
 }
@@ -104,6 +152,64 @@ class SplashRoute extends PageRouteInfo<void> {
       return const SplashPage();
     },
   );
+}
+
+/// generated route for
+/// [SupportChatPage]
+class SupportChatRoute extends PageRouteInfo<SupportChatRouteArgs> {
+  SupportChatRoute({
+    Key? key,
+    required String chatId,
+    required String title,
+    List<PageRouteInfo>? children,
+  }) : super(
+         SupportChatRoute.name,
+         args: SupportChatRouteArgs(key: key, chatId: chatId, title: title),
+         initialChildren: children,
+       );
+
+  static const String name = 'SupportChatRoute';
+
+  static PageInfo page = PageInfo(
+    name,
+    builder: (data) {
+      final args = data.argsAs<SupportChatRouteArgs>();
+      return SupportChatPage(
+        key: args.key,
+        chatId: args.chatId,
+        title: args.title,
+      );
+    },
+  );
+}
+
+class SupportChatRouteArgs {
+  const SupportChatRouteArgs({
+    this.key,
+    required this.chatId,
+    required this.title,
+  });
+
+  final Key? key;
+
+  final String chatId;
+
+  final String title;
+
+  @override
+  String toString() {
+    return 'SupportChatRouteArgs{key: $key, chatId: $chatId, title: $title}';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    if (other is! SupportChatRouteArgs) return false;
+    return key == other.key && chatId == other.chatId && title == other.title;
+  }
+
+  @override
+  int get hashCode => key.hashCode ^ chatId.hashCode ^ title.hashCode;
 }
 
 /// generated route for
@@ -167,6 +273,55 @@ class VerifyRouteArgs {
 
   @override
   int get hashCode => key.hashCode ^ phoneNumber.hashCode;
+}
+
+/// generated route for
+/// [WalletEarnedPage]
+class WalletEarnedRoute extends PageRouteInfo<WalletEarnedRouteArgs> {
+  WalletEarnedRoute({
+    Key? key,
+    DateTime? initialMonth,
+    List<PageRouteInfo>? children,
+  }) : super(
+         WalletEarnedRoute.name,
+         args: WalletEarnedRouteArgs(key: key, initialMonth: initialMonth),
+         initialChildren: children,
+       );
+
+  static const String name = 'WalletEarnedRoute';
+
+  static PageInfo page = PageInfo(
+    name,
+    builder: (data) {
+      final args = data.argsAs<WalletEarnedRouteArgs>(
+        orElse: () => const WalletEarnedRouteArgs(),
+      );
+      return WalletEarnedPage(key: args.key, initialMonth: args.initialMonth);
+    },
+  );
+}
+
+class WalletEarnedRouteArgs {
+  const WalletEarnedRouteArgs({this.key, this.initialMonth});
+
+  final Key? key;
+
+  final DateTime? initialMonth;
+
+  @override
+  String toString() {
+    return 'WalletEarnedRouteArgs{key: $key, initialMonth: $initialMonth}';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    if (other is! WalletEarnedRouteArgs) return false;
+    return key == other.key && initialMonth == other.initialMonth;
+  }
+
+  @override
+  int get hashCode => key.hashCode ^ initialMonth.hashCode;
 }
 
 /// generated route for

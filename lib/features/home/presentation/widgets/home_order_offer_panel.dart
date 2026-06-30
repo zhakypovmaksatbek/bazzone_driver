@@ -3,7 +3,6 @@ import 'package:bazzone_driver/features/home/domain/entities/order.dart';
 import 'package:bazzone_driver/features/home/presentation/widgets/home_order_collapsed_panel.dart';
 import 'package:bazzone_driver/features/home/presentation/widgets/order_detail_body.dart';
 import 'package:bazzone_driver/generated/locale_keys.g.dart';
-import 'package:bazzone_driver/shared/widgets/buttons/swipe_action_button.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
@@ -69,8 +68,8 @@ class _HomeOrderOfferPanelState extends State<HomeOrderOfferPanel>
   }
 
   int get _remainingSeconds {
-    final remaining = (1 - _countdownController.value) *
-        widget.order.offerTimeoutSeconds;
+    final remaining =
+        (1 - _countdownController.value) * widget.order.offerTimeoutSeconds;
     return remaining.ceil().clamp(0, widget.order.offerTimeoutSeconds);
   }
 
@@ -127,14 +126,40 @@ class _HomeOrderOfferPanelState extends State<HomeOrderOfferPanel>
                     const SizedBox(height: 20),
                     Padding(
                       padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                      child: SwipeActionButton(
-                        label: LocaleKeys.home_page_accept_order.tr(),
-                        isLoading: widget.isLoading,
-                        onConfirmed: widget.onAccept ?? () {},
+                      child: SizedBox(
+                        width: double.infinity,
+                        height: 56,
+                        child: FilledButton(
+                          onPressed: widget.isLoading ? null : widget.onAccept,
+                          style: FilledButton.styleFrom(
+                            backgroundColor: ColorConst.primary,
+                            foregroundColor: ColorConst.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            elevation: 0,
+                          ),
+                          child: widget.isLoading
+                              ? const SizedBox(
+                                  width: 22,
+                                  height: 22,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: ColorConst.white,
+                                  ),
+                                )
+                              : Text(
+                                  LocaleKeys.home_page_accept_order.tr(),
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                        ),
                       ),
                     ),
                     Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
                       child: TextButton(
                         onPressed: widget.isLoading ? null : widget.onDecline,
                         style: TextButton.styleFrom(

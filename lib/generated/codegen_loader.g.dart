@@ -66,6 +66,67 @@ class CodegenLoader extends AssetLoader{
     "seconds_short": "{}с",
     "order_accepted": "Заказ принят",
     "depart": "Начать поездку"
+  },
+  "wallet_page": {
+    "balance": "Баланс",
+    "earned": "Заработано",
+    "top_up": "Пополнить",
+    "my_cards": "Мои карты",
+    "more": "Дополнительно",
+    "transaction_history": "История транзакций",
+    "no_transactions": "Транзакций пока нет"
+  },
+  "wallet_earned_page": {
+    "taxi_park": "Таксопарк",
+    "limit": "Лимит",
+    "commission": "Комиссия",
+    "partnership": "Партнерство",
+    "partnership_months": "{} мес",
+    "select_card": "Выберите карту"
+  },
+  "support_page": {
+    "title": "Поддержка",
+    "notifications": "Уведомления",
+    "whatsapp": "What's App",
+    "whatsapp_error": "Не удалось открыть WhatsApp",
+    "greeting": "Здравствуйте",
+    "message_hint": "Сообщение"
+  },
+  "profile_page": {
+    "title": "Профиль",
+    "driver": "Водитель",
+    "orders": "Заказы",
+    "experience": "Опыт",
+    "rating": "Рейтинг",
+    "trip_history": "История поездок",
+    "your_cars": "Ваши автомобили",
+    "taxi_park": "Таксопарк",
+    "car_diagnostics": "Диагностика авто",
+    "photo_diagnostics": "Фотодиагностика",
+    "tariffs": "Тарифы",
+    "news": "Новости"
+  },
+  "profile_cars_page": {
+    "registration_certificate": "Свидетельство о регистрации",
+    "vin_or_state_number": "VIN или гос номер"
+  },
+  "profile_taxi_park_page": {
+    "title": "О таксопарке",
+    "commission": "{} Комиссия",
+    "schedule": "График работы",
+    "weekdays": "Пн-Пт",
+    "weekends": "Сб-Вс",
+    "day_off": "Выходной",
+    "address": "Адрес",
+    "contacts": "Контакты",
+    "more_about": "Подробнее о таксопарке",
+    "withdrawal_terms": "Условия вывода средств",
+    "change_park": "Изменить таксопарк"
+  },
+  "profile_trip_history_page": {
+    "title": "История заказов",
+    "today": "Сегодня",
+    "yesterday": "Вчера"
   }
 };
 static const Map<String, Map<String,dynamic>> mapLocales = {"ru": _ru};

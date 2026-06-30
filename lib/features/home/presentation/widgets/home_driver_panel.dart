@@ -73,11 +73,7 @@ class HomeDriverPanel extends StatelessWidget {
                       ],
                     ),
                   ),
-                  Container(
-                    width: 1,
-                    height: 40,
-                    color: ColorConst.lightGrey,
-                  ),
+                  Container(width: 1, height: 40, color: ColorConst.lightGrey),
                   const SizedBox(width: 16),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
@@ -112,51 +108,13 @@ class HomeDriverPanel extends StatelessWidget {
             ),
           ),
         ),
-        if (isOnline) ...[
-          const SizedBox(height: 12),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              children: [
-                Container(
-                  width: 8,
-                  height: 8,
-                  decoration: const BoxDecoration(
-                    color: ColorConst.success,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  LocaleKeys.home_page_online.tr(),
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: ColorConst.success,
-                  ),
-                ),
-                const Expanded(
-                  child: Padding(
-                    padding: EdgeInsets.only(left: 12),
-                    child: Divider(color: ColorConst.lightGrey, height: 1),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
+
         const SizedBox(height: 16),
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
           child: isOnline
-              ? _FinishWorkButton(
-                  isLoading: isLoading,
-                  onPressed: onFinishWork,
-                )
-              : _StartWorkButton(
-                  isLoading: isLoading,
-                  onPressed: onStartWork,
-                ),
+              ? _FinishWorkButton(isLoading: isLoading, onPressed: onFinishWork)
+              : _StartWorkButton(isLoading: isLoading, onPressed: onStartWork),
         ),
       ],
     );

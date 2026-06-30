@@ -16,6 +16,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
 @RoutePage(name: 'HomeRoute')
@@ -40,84 +41,89 @@ class _HomeView extends StatefulWidget {
 
 class _HomeViewState extends State<_HomeView> {
   GoogleMapController? _mapController;
-  final DraggableScrollableController _sheetController =
-      DraggableScrollableController();
+  final HomeSheetController _sheetController = HomeSheetController();
+
   LatLng _currentPosition = MapConst.defaultLocation;
   final String _address = MapConst.defaultAddress;
   bool _isMapReady = false;
-  double _sheetExtent = 0.45;
-  double _minChildSize = 0.12;
-  double _maxChildSize = 0.85;
-  HomeSheetPhase? _lastSheetPhase;
-  ActiveOrderPhase? _lastActivePhase;
-  bool _shouldAnimateToMaxAfterResolve = false;
-  bool _isPaidWaiting = false;
+
+  // ── Phase tracking (for _onSizeChanged config calculation) ──────
+  HomeSheetPhase _currentPhase = HomeSheetPhase.driverSummary;
+  ActiveOrderPhase? _currentActivePhase;
+
+  // ── ValueNotifier'lar: setState yok, yalnızca ilgili builder rebuild ──
+  /// Sheet yarı noktasını geçince true → sadece content area rebuild olur.
+  final ValueNotifier<bool> _isExpandedNotifier = ValueNotifier(false);
+
+  /// Ücretli bekleme durumu → sadece overlay banner rebuild olur.
+  final ValueNotifier<bool> _isPaidWaitingNotifier = ValueNotifier(false);
+
+  // ── Overlay banner text ────────────────────────────────────────
 
   String _getOverlayBannerText(ActiveOrderPhase phase) {
     return switch (phase) {
       ActiveOrderPhase.headingToClient => 'Ехать 4 мин',
-      ActiveOrderPhase.waitingForClient => _isPaidWaiting ? 'Начинается платное ожидание' : 'Вы на месте',
+      ActiveOrderPhase.waitingForClient =>
+        _isPaidWaitingNotifier.value ? 'Начинается платное ожидание' : 'Вы на месте',
       ActiveOrderPhase.headingToDestination => 'Ехать 4 мин',
       ActiveOrderPhase.completed => '',
     };
   }
 
+  // ── Lifecycle ──────────────────────────────────────────────────
+
   @override
   void initState() {
     super.initState();
     initializeDateFormatting('ru');
-    _sheetController.addListener(_onSheetExtentChanged);
+    // sizeListenable: ValueListenable → listener build fazında çağrılsa bile
+    // sadece descendant ValueListenableBuilder'lar rebuild olur, _HomeView değil.
+    _sheetController.sizeListenable.addListener(_onSizeChanged);
     _initLocation();
   }
 
   @override
   void dispose() {
-    _sheetController.removeListener(_onSheetExtentChanged);
+    _sheetController.sizeListenable.removeListener(_onSizeChanged);
     _sheetController.dispose();
+    _isExpandedNotifier.dispose();
+    _isPaidWaitingNotifier.dispose();
     _mapController?.dispose();
     super.dispose();
   }
 
-  void _onSheetExtentChanged() {
-    if (!_sheetController.isAttached) return;
+  // ── Size listener ──────────────────────────────────────────────
+
+  /// Sheet boyutu değişince yalnızca _isExpandedNotifier güncellenir.
+  /// setState YOK → _HomeView rebuild yok.
+  void _onSizeChanged() {
     final size = _sheetController.size;
-    if ((size - _sheetExtent).abs() < 0.001) return;
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted || !_sheetController.isAttached) return;
-      final nextSize = _sheetController.size;
-      if ((nextSize - _sheetExtent).abs() < 0.001) return;
-      setState(() => _sheetExtent = nextSize);
-    });
-  }
-
-  void _onSizesResolved(HomeSheetSizes sizes) {
-    final minChanged = (sizes.minChildSize - _minChildSize).abs() > 0.001;
-    final maxChanged = (sizes.maxChildSize - _maxChildSize).abs() > 0.001;
-
-    if (minChanged || maxChanged) {
-      setState(() {
-        _minChildSize = sizes.minChildSize;
-        _maxChildSize = sizes.maxChildSize;
-      });
-    }
-
-    if (_shouldAnimateToMaxAfterResolve) {
-      _shouldAnimateToMaxAfterResolve = false;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _animateSheetTo(sizes.maxChildSize);
-      });
+    final config = HomeDriverSheet.getConfig(_currentPhase, _currentActivePhase);
+    final isExpanded =
+        (size - config.minSize) > (config.maxSize - config.minSize) * 0.5;
+    if (_isExpandedNotifier.value != isExpanded) {
+      _isExpandedNotifier.value = isExpanded;
     }
   }
+
+  // ── Sheet helpers ──────────────────────────────────────────────
 
   Future<void> _animateSheetTo(double size) async {
     if (!_sheetController.isAttached) return;
     await _sheetController.animateTo(
-      size.clamp(_minChildSize, _maxChildSize),
+      size.clamp(0.10, 0.95),
       duration: const Duration(milliseconds: 280),
       curve: Curves.easeOut,
     );
   }
+
+  void _expandSheet() {
+    if (!_sheetController.isAttached) return;
+    final config = HomeDriverSheet.getConfig(_currentPhase, _currentActivePhase);
+    _animateSheetTo(config.maxSize);
+  }
+
+  // ── Location ───────────────────────────────────────────────────
 
   Future<void> _initLocation() async {
     final serviceEnabled = await Geolocator.isLocationServiceEnabled();
@@ -145,7 +151,6 @@ class _HomeViewState extends State<_HomeView> {
   Future<void> _animateToCurrentPosition() async {
     final controller = _mapController;
     if (controller == null) return;
-
     await controller.animateCamera(
       CameraUpdate.newCameraPosition(
         CameraPosition(target: _currentPosition, zoom: MapConst.defaultZoom),
@@ -155,19 +160,11 @@ class _HomeViewState extends State<_HomeView> {
 
   void _onMapCreated(GoogleMapController controller) {
     _mapController = controller;
-    setState(() => _isMapReady = true);
+    setState(() => _isMapReady = true); // Tek seferlik — kabul edilebilir
     _animateToCurrentPosition();
   }
 
-  void _onSheetPhaseChanged(HomeSheetPhase phase) {
-    if (_lastSheetPhase == phase) return;
-    _lastSheetPhase = phase;
-  }
-
-  void _expandSheet() {
-    if (!_sheetController.isAttached) return;
-    _animateSheetTo(_maxChildSize);
-  }
+  // ── Sheet content builder ──────────────────────────────────────
 
   HomeSheetContent _buildSheetContent({
     required DriverSession session,
@@ -182,14 +179,13 @@ class _HomeViewState extends State<_HomeView> {
       isExpanded: isExpanded,
       onExpandSheet: _expandSheet,
       onWaitingStateChanged: (val) {
-        if (val != _isPaidWaiting) {
-          setState(() {
-            _isPaidWaiting = val;
-          });
-        }
+        // setState yok: sadece _isPaidWaitingNotifier güncellenir
+        _isPaidWaitingNotifier.value = val;
       },
     );
   }
+
+  // ── Build ──────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
@@ -201,75 +197,50 @@ class _HomeViewState extends State<_HomeView> {
               current.session?.activeOrder?.activePhase,
       listener: (context, state) {
         if (state.errorMessage != null) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text(state.errorMessage!)));
+          ScaffoldMessenger.of(context)
+              .showSnackBar(SnackBar(content: Text(state.errorMessage!)));
         }
 
-        final phase = state.sheetPhase;
-        if (phase == null) return;
-
+        final phase = state.sheetPhase ?? HomeSheetPhase.driverSummary;
         final activePhase = state.session?.activeOrder?.activePhase;
 
-        if (phase != _lastSheetPhase) {
-          _lastActivePhase = activePhase;
-          _shouldAnimateToMaxAfterResolve = true;
-          _isPaidWaiting = false;
-          _onSheetPhaseChanged(phase);
-          return;
-        }
+        if (phase != _currentPhase || activePhase != _currentActivePhase) {
+          _currentPhase = phase;
+          _currentActivePhase = activePhase;
+          _isPaidWaitingNotifier.value = false;
 
-        if (activePhase != null && activePhase != _lastActivePhase) {
-          _lastActivePhase = activePhase;
-          _shouldAnimateToMaxAfterResolve = true;
-          _isPaidWaiting = false;
-          setState(() {});
+          final config = HomeDriverSheet.getConfig(phase, activePhase);
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _animateSheetTo(config.initialSize);
+          });
         }
       },
       builder: (context, state) {
         final session = state.session;
         final sheetPhase = session?.sheetPhase ?? HomeSheetPhase.driverSummary;
-        final fallbackExtent = HomeDriverSheet.targetSizeFor(
-          sheetPhase,
-          context,
-        );
-        final sheetExtent = _sheetController.isAttached
-            ? _sheetExtent
-            : fallbackExtent;
-        final isSheetExpanded = HomeDriverSheet.isSingleSizePhase(sheetPhase)
-            ? true
-            : (sheetExtent - _minChildSize) > (_maxChildSize - _minChildSize) * 0.5;
+        final activePhase = session?.activeOrder?.activePhase;
 
         if (state.status == HomeStatus.loading && session == null) {
           return const Scaffold(
             body: Center(child: CircularProgressIndicator()),
           );
         }
-
         if (session == null) {
           return const Scaffold(
             body: Center(child: CircularProgressIndicator()),
           );
         }
 
-        final sheetContent = _buildSheetContent(
-          session: session,
-          isBusy: state.isBusy,
-          action: state.action,
-          isExpanded: isSheetExpanded,
-        );
-
         return Scaffold(
           backgroundColor: ColorConst.white,
           body: LayoutBuilder(
             builder: (context, constraints) {
-              final mapBottomPadding = sheetExtent * constraints.maxHeight;
-
               return Stack(
                 children: [
+                  // ── Harita ────────────────────────────────────
                   HomeMapView(
                     currentPosition: _currentPosition,
-                    bottomPadding: mapBottomPadding,
+                    bottomPadding: 0,
                     onMapCreated: _onMapCreated,
                   ),
                   if (!_isMapReady)
@@ -277,6 +248,8 @@ class _HomeViewState extends State<_HomeView> {
                       color: ColorConst.lightGrey,
                       child: Center(child: CircularProgressIndicator()),
                     ),
+
+                  // ── Üst bar ───────────────────────────────────
                   SafeArea(
                     bottom: false,
                     child: Column(
@@ -290,91 +263,105 @@ class _HomeViewState extends State<_HomeView> {
                       ],
                     ),
                   ),
-                  Positioned(
-                    right: 16,
-                    bottom: mapBottomPadding + 16,
-                    child: MapOverlayButton(
-                      path: AssetConst.filledLocation,
-                      onPressed: _animateToCurrentPosition,
+
+                  // ── Overlay butonlar ──────────────────────────
+                  // Sadece sheet boyutu veya isPaidWaiting değişince rebuild.
+                  // _HomeView hiç rebuild olmaz.
+                  Positioned.fill(
+                    child: ListenableBuilder(
+                      listenable: Listenable.merge([
+                        _sheetController.sizeListenable,
+                        _isPaidWaitingNotifier,
+                      ]),
+                      builder: (context, _) {
+                        final sheetSize = _sheetController.size;
+                        final mapBottomPadding =
+                            sheetSize * constraints.maxHeight;
+                        return Stack(
+                          children: [
+                            Positioned(
+                              right: 16,
+                              bottom: mapBottomPadding + 16 +
+                                  (session.activeOrder?.activePhase ==
+                                          ActiveOrderPhase.headingToDestination
+                                      ? 84.0
+                                      : 0.0),
+                              child: MapOverlayButton(
+                                path: AssetConst.filledLocation,
+                                onPressed: _animateToCurrentPosition,
+                              ),
+                            ),
+                            if (session.activeOrder != null &&
+                                session.activeOrder!.activePhase !=
+                                    ActiveOrderPhase.completed)
+                              if (session.activeOrder!.activePhase ==
+                                  ActiveOrderPhase.headingToDestination)
+                                Positioned(
+                                  left: 16,
+                                  right: 16,
+                                  bottom: mapBottomPadding + 16,
+                                  child: _FloatingTrafficProgressCard(
+                                    order: session.activeOrder!,
+                                  ),
+                                )
+                              else
+                                Positioned(
+                                  left: 16,
+                                  right: 80,
+                                  bottom: mapBottomPadding + 16,
+                                  child: Container(
+                                    height: 48,
+                                    alignment: Alignment.center,
+                                    decoration: BoxDecoration(
+                                      color: ColorConst.white,
+                                      borderRadius: BorderRadius.circular(24),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withValues(
+                                            alpha: 0.1,
+                                          ),
+                                          blurRadius: 8,
+                                          offset: const Offset(0, 2),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Text(
+                                      _getOverlayBannerText(
+                                        session.activeOrder!.activePhase,
+                                      ),
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600,
+                                        color: ColorConst.black,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                          ],
+                        );
+                      },
                     ),
                   ),
-                  if (session.activeOrder != null &&
-                      session.activeOrder!.activePhase != ActiveOrderPhase.completed)
-                    Positioned(
-                      left: 16,
-                      right: 80,
-                      bottom: mapBottomPadding + 16,
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 48,
-                            height: 48,
-                            decoration: BoxDecoration(
-                              color: ColorConst.white,
-                              shape: BoxShape.circle,
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.1),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
-                            ),
-                            child: IconButton(
-                              icon: const Icon(Icons.chevron_left, color: ColorConst.black, size: 28),
-                              onPressed: () {
-                                _animateSheetTo(_minChildSize);
-                              },
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Container(
-                              height: 48,
-                              alignment: Alignment.center,
-                              decoration: BoxDecoration(
-                                color: ColorConst.white,
-                                borderRadius: BorderRadius.circular(24),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withValues(alpha: 0.1),
-                                    blurRadius: 8,
-                                    offset: const Offset(0, 2),
-                                  ),
-                                ],
-                              ),
-                              child: Text(
-                                _getOverlayBannerText(session.activeOrder!.activePhase),
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w700,
-                                  color: ColorConst.black,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  HomeDriverSheet(
-                    controller: _sheetController,
-                    phase: sheetPhase,
-                    stateKey: session.activeOrder?.activePhase,
-                    initialChildSize: fallbackExtent,
-                    onSizesResolved: _onSizesResolved,
-                    measureCollapsed: _buildSheetContent(
-                      session: session,
-                      isBusy: state.isBusy,
-                      action: state.action,
-                      isExpanded: false,
-                    ),
-                    measureExpanded: _buildSheetContent(
-                      session: session,
-                      isBusy: state.isBusy,
-                      action: state.action,
-                      isExpanded: true,
-                    ),
-                    child: sheetContent,
+
+                  // ── Bottom sheet ──────────────────────────────
+                  // isExpanded değişince yalnızca bu ValueListenableBuilder
+                  // ve içindeki sheetContent rebuild olur.
+                  ValueListenableBuilder<bool>(
+                    valueListenable: _isExpandedNotifier,
+                    builder: (context, isExpanded, _) {
+                      final sheetContent = _buildSheetContent(
+                        session: session,
+                        isBusy: state.isBusy,
+                        action: state.action,
+                        isExpanded: isExpanded,
+                      );
+                      return HomeDriverSheet(
+                        controller: _sheetController,
+                        phase: sheetPhase,
+                        activePhase: activePhase,
+                        child: sheetContent,
+                      );
+                    },
                   ),
                 ],
               );
@@ -382,6 +369,114 @@ class _HomeViewState extends State<_HomeView> {
           ),
         );
       },
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────
+// _FloatingTrafficProgressCard
+// ─────────────────────────────────────────────────────────
+
+class _FloatingTrafficProgressCard extends StatelessWidget {
+  const _FloatingTrafficProgressCard({required this.order});
+
+  final Order order;
+
+  @override
+  Widget build(BuildContext context) {
+    final arrivalTime = DateTime.now().add(
+      Duration(minutes: (order.distanceToPointKm * 3).round()),
+    );
+    final arrivalStr =
+        "${arrivalTime.hour.toString().padLeft(2, '0')}:${arrivalTime.minute.toString().padLeft(2, '0')}";
+
+    final durationMin = (order.distanceToPointKm * 3).round();
+    final durationStr = context.locale.languageCode == 'ky'
+        ? "$durationMin мүн"
+        : "$durationMin мин";
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: ColorConst.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                "${order.distanceToPointKm} км",
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: ColorConst.black,
+                ),
+              ),
+              Text(
+                arrivalStr,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: ColorConst.black,
+                ),
+              ),
+              Text(
+                durationStr,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: ColorConst.black,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              const Icon(Icons.play_arrow, color: ColorConst.black, size: 16),
+              const SizedBox(width: 4),
+              Expanded(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(3),
+                  child: SizedBox(
+                    height: 6,
+                    child: Row(
+                      children: [
+                        Expanded(flex: 5, child: Container(color: ColorConst.success)),
+                        Expanded(flex: 1, child: Container(color: Colors.yellow)),
+                        Expanded(flex: 1, child: Container(color: ColorConst.error)),
+                        Expanded(flex: 4, child: Container(color: ColorConst.success)),
+                        Expanded(flex: 1, child: Container(color: Colors.yellow)),
+                        Expanded(flex: 2, child: Container(color: ColorConst.success)),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 6),
+              Container(
+                width: 10,
+                height: 10,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: ColorConst.black, width: 2),
+                  color: ColorConst.white,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }

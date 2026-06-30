@@ -10,6 +10,11 @@ class SwipeActionButton extends StatefulWidget {
     this.isLoading = false,
     this.color,
     this.height = 60.0,
+    this.backgroundColor,
+    this.textColor,
+    this.thumbColor,
+    this.thumbIconColor,
+    this.borderColor,
   });
 
   final String label;
@@ -17,6 +22,11 @@ class SwipeActionButton extends StatefulWidget {
   final bool isLoading;
   final Color? color;
   final double height;
+  final Color? backgroundColor;
+  final Color? textColor;
+  final Color? thumbColor;
+  final Color? thumbIconColor;
+  final Color? borderColor;
 
   @override
   State<SwipeActionButton> createState() => _SwipeActionButtonState();
@@ -114,29 +124,33 @@ class _SwipeActionButtonState extends State<SwipeActionButton>
           final backgroundOpacity = 0.08 + 0.12 * _progress;
           final labelOpacity = (1 - _progress * 1.5).clamp(0.0, 1.0);
 
+          final bg = widget.backgroundColor ?? _color.withValues(alpha: backgroundOpacity);
+          final borderCol = widget.borderColor ?? _color;
+          final textCol = widget.textColor ?? _color;
+
           return GestureDetector(
             onHorizontalDragUpdate: _onHorizontalDragUpdate,
             onHorizontalDragEnd: _onHorizontalDragEnd,
             child: Container(
               height: widget.height,
               decoration: BoxDecoration(
-                color: _color.withValues(alpha: backgroundOpacity),
+                color: bg,
                 borderRadius: BorderRadius.circular(widget.height / 2),
-                border: Border.all(color: _color),
+                border: Border.all(color: borderCol),
               ),
               child: Stack(
                 alignment: Alignment.center,
                 children: [
                   Opacity(
-                    opacity: labelOpacity,
-                    child: Text(
-                      widget.label,
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: _color,
-                      ),
-                    ),
+                     opacity: labelOpacity,
+                     child: Text(
+                       widget.label,
+                       style: TextStyle(
+                         fontSize: 16,
+                         fontWeight: FontWeight.w700,
+                         color: textCol,
+                       ),
+                     ),
                   ),
                   Positioned(
                     left: _horizontalPadding + _dragOffset,
@@ -152,24 +166,26 @@ class _SwipeActionButtonState extends State<SwipeActionButton>
   }
 
   Widget _buildThumb() {
+    final tColor = widget.thumbColor ?? _color;
+    final tIconColor = widget.thumbIconColor ?? ColorConst.white;
     return Container(
       width: _thumbDiameter,
       height: _thumbDiameter,
       decoration: BoxDecoration(
-        color: _color,
+        color: tColor,
         shape: BoxShape.circle,
       ),
       child: widget.isLoading
-          ? const Padding(
-              padding: EdgeInsets.all(14),
+          ? Padding(
+              padding: const EdgeInsets.all(14),
               child: CircularProgressIndicator(
                 strokeWidth: 2,
-                color: ColorConst.white,
+                color: tIconColor,
               ),
             )
-          : const Icon(
+          : Icon(
               Icons.arrow_forward,
-              color: ColorConst.white,
+              color: tIconColor,
               size: 24,
             ),
     );

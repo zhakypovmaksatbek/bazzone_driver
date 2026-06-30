@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:bazzone_driver/core/theme/color_const.dart';
 import 'package:bazzone_driver/features/home/domain/entities/order.dart';
 import 'package:bazzone_driver/features/home/presentation/widgets/home_order_collapsed_panel.dart';
@@ -94,25 +95,29 @@ class _HomeActiveOrderPanelState extends State<HomeActiveOrderPanel> {
   }
 
   String get _statusLabel => switch (widget.order.activePhase) {
-        ActiveOrderPhase.headingToClient => LocaleKeys.home_page_en_route_to_client.tr(),
-        ActiveOrderPhase.waitingForClient => LocaleKeys.home_page_arrived_at_client.tr(),
-        ActiveOrderPhase.headingToDestination => LocaleKeys.home_page_en_route_to_destination.tr(),
-        ActiveOrderPhase.completed => 'Отзыв о поездке',
-      };
+    ActiveOrderPhase.headingToClient =>
+      LocaleKeys.home_page_en_route_to_client.tr(),
+    ActiveOrderPhase.waitingForClient =>
+      LocaleKeys.home_page_arrived_at_client.tr(),
+    ActiveOrderPhase.headingToDestination =>
+      LocaleKeys.home_page_en_route_to_destination.tr(),
+    ActiveOrderPhase.completed => 'Отзыв о поездке',
+  };
 
   String get _swipeLabel => switch (widget.order.activePhase) {
-        ActiveOrderPhase.headingToClient => LocaleKeys.home_page_arrived.tr(),
-        ActiveOrderPhase.waitingForClient => LocaleKeys.home_page_depart.tr(),
-        ActiveOrderPhase.headingToDestination => '',
-        ActiveOrderPhase.completed => '',
-      };
+    ActiveOrderPhase.headingToClient => LocaleKeys.home_page_arrived.tr(),
+    ActiveOrderPhase.waitingForClient => LocaleKeys.home_page_depart.tr(),
+    ActiveOrderPhase.headingToDestination =>
+      LocaleKeys.home_page_complete_order.tr(),
+    ActiveOrderPhase.completed => '',
+  };
 
   Color get _statusColor => switch (widget.order.activePhase) {
-        ActiveOrderPhase.headingToClient => ColorConst.primary,
-        ActiveOrderPhase.waitingForClient => ColorConst.info,
-        ActiveOrderPhase.headingToDestination => ColorConst.success,
-        ActiveOrderPhase.completed => ColorConst.primary,
-      };
+    ActiveOrderPhase.headingToClient => ColorConst.primary,
+    ActiveOrderPhase.waitingForClient => ColorConst.info,
+    ActiveOrderPhase.headingToDestination => ColorConst.success,
+    ActiveOrderPhase.completed => ColorConst.primary,
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -121,23 +126,91 @@ class _HomeActiveOrderPanelState extends State<HomeActiveOrderPanel> {
     // Collapsed State Router
     if (!widget.isExpanded) {
       if (order.activePhase == ActiveOrderPhase.headingToDestination) {
-        return Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: _RouteSummaryCard(
-                pickup: order.pickupAddress,
-                destination: order.destinationAddress,
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Row 1: Destination address
+              Row(
+                children: [
+                  // Point B circular icon
+                  Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: ColorConst.black, width: 2),
+                    ),
+                    alignment: Alignment.center,
+                    child: const Text(
+                      'Б',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                        color: ColorConst.black,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      order.destinationAddress,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: ColorConst.black,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    "${(order.distanceToPointKm * 2).ceil().toString().padLeft(2, '0')}:13",
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: ColorConst.black,
+                    ),
+                  ),
+                ],
               ),
-            ),
-            const SizedBox(height: 12),
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16),
-              child: _TimelineProgressBarCard(),
-            ),
-            const SizedBox(height: 12),
-          ],
+              const SizedBox(height: 12),
+
+              // Row 2: Cash / Payment info Chip
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFC8E6C9), // Very light green background
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.payments_outlined,
+                      color: ColorConst.black,
+                      size: 18,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      context.locale.languageCode == 'ky'
+                          ? 'Накталай төлөө'
+                          : 'Оплата наличными',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: ColorConst.black,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         );
       }
 
@@ -155,192 +228,404 @@ class _HomeActiveOrderPanelState extends State<HomeActiveOrderPanel> {
       child: switch (order.activePhase) {
         // Phase 1: Heading to client (point A)
         ActiveOrderPhase.headingToClient => Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _ActiveStatusHeader(
-                label: _statusLabel,
-                color: _statusColor,
-                price: order.price,
-                isExpanded: true,
-              ),
-              const SizedBox(height: 16),
-              _RouteSummaryCard(
-                pickup: order.pickupAddress,
-                destination: order.destinationAddress,
-              ),
-              const SizedBox(height: 16),
-              _PassengerCard(
-                name: order.customerName,
-                rating: order.customerRating,
-                avatarUrl: order.customerAvatarUrl,
-              ),
-              const SizedBox(height: 20),
-              SwipeActionButton(
-                key: ValueKey(order.activePhase),
-                label: _swipeLabel,
-                isLoading: widget.isLoading,
-                color: ColorConst.primary,
-                onConfirmed: widget.onArrived ?? () {},
-              ),
-            ],
-          ),
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _ActiveStatusHeader(
+              label: _statusLabel,
+              color: _statusColor,
+              price: order.price,
+              isExpanded: true,
+            ),
+            const SizedBox(height: 16),
+            _RouteSummaryCard(
+              pickup: order.pickupAddress,
+              destination: order.destinationAddress,
+            ),
+            const SizedBox(height: 16),
+            _PassengerCard(
+              name: order.customerName,
+              rating: order.customerRating,
+              avatarUrl: order.customerAvatarUrl,
+            ),
+            const SizedBox(height: 20),
+            SwipeActionButton(
+              key: ValueKey(order.activePhase),
+              label: _swipeLabel,
+              isLoading: widget.isLoading,
+              color: ColorConst.primary,
+              textColor: ColorConst.white,
+              onConfirmed: widget.onArrived ?? () {},
+            ),
+          ],
+        ),
 
         // Phase 2: Arrived, waiting for client
         ActiveOrderPhase.waitingForClient => Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _WaitingTimerCard(
-                isPaidWaiting: _isPaidWaiting,
-                timerText: _isPaidWaiting
-                    ? _formatTime(_paidSecondsElapsed)
-                    : _formatTime(_freeSecondsLeft),
-              ),
-              const SizedBox(height: 16),
-              _PickupLabelCard(pickup: '${order.pickupAddress}, TechnoPark'),
-              const SizedBox(height: 16),
-              _PassengerCard(
-                name: order.customerName,
-                rating: order.customerRating,
-                avatarUrl: order.customerAvatarUrl,
-              ),
-              const SizedBox(height: 20),
-              SwipeActionButton(
-                key: ValueKey(order.activePhase),
-                label: _swipeLabel,
-                isLoading: widget.isLoading,
-                color: ColorConst.success,
-                onConfirmed: widget.onArrived ?? () {},
-              ),
-            ],
-          ),
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _WaitingTimerCard(
+              isPaidWaiting: _isPaidWaiting,
+              timerText: _isPaidWaiting
+                  ? _formatTime(_paidSecondsElapsed)
+                  : _formatTime(_freeSecondsLeft),
+            ),
+            const SizedBox(height: 16),
+            _PickupLabelCard(pickup: '${order.pickupAddress}, TechnoPark'),
+            const SizedBox(height: 16),
+            _PassengerCard(
+              name: order.customerName,
+              rating: order.customerRating,
+              avatarUrl: order.customerAvatarUrl,
+            ),
+            const SizedBox(height: 20),
+            SwipeActionButton(
+              key: ValueKey(order.activePhase),
+              label: _swipeLabel,
+              isLoading: widget.isLoading,
+              color: ColorConst.success,
+              onConfirmed: widget.onArrived ?? () {},
+            ),
+          ],
+        ),
 
         // Phase 3: Heading to destination (point B)
         ActiveOrderPhase.headingToDestination => Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _RouteSummaryCard(
-                pickup: order.pickupAddress,
-                destination: order.destinationAddress,
-              ),
-              const SizedBox(height: 12),
-              const _TimelineProgressBarCard(),
-              const SizedBox(height: 16),
-              _PassengerCard(
-                name: order.customerName,
-                rating: order.customerRating,
-                avatarUrl: order.customerAvatarUrl,
-              ),
-              const SizedBox(height: 16),
-              _PaymentCard(price: order.price),
-              const SizedBox(height: 20),
-              Column(
-                children: [
-                  IconButton(
-                    onPressed: widget.isLoading ? null : widget.onArrived,
-                    icon: const Icon(Icons.close, color: ColorConst.error, size: 28),
-                    style: IconButton.styleFrom(
-                      backgroundColor: ColorConst.error.withValues(alpha: 0.1),
-                      padding: const EdgeInsets.all(16),
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Row 1: Destination address
+            Row(
+              children: [
+                // Point B circular icon
+                Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: ColorConst.black, width: 2),
+                  ),
+                  alignment: Alignment.center,
+                  child: const Text(
+                    'Б',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                      color: ColorConst.black,
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  TextButton(
-                    onPressed: widget.isLoading ? null : widget.onArrived,
-                    child: const Text(
-                      'Завершить поездку',
-                      style: TextStyle(
-                        color: ColorConst.error,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    order.destinationAddress,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: ColorConst.black,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  "${(order.distanceToPointKm * 2).ceil().toString().padLeft(2, '0')}:13",
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: ColorConst.black,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+
+            // Row 2: Cash / Payment info
+            Row(
+              children: [
+                const Icon(
+                  Icons.payments_outlined,
+                  color: ColorConst.black,
+                  size: 28,
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        context.locale.languageCode == 'ky'
+                            ? 'Накталай төлөө'
+                            : 'Оплата наличными',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: ColorConst.black,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        context.locale.languageCode == 'ky'
+                            ? 'Тыгындарды эске алганда сапардын баасы'
+                            : 'Стоимость поездки с учетом пробок',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: ColorConst.grey,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  order.price.contains('сом') || order.price.contains('с')
+                      ? order.price
+                      : "${order.price} сом",
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: ColorConst.black,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+
+            // Row 3: Passenger rating
+            Row(
+              children: [
+                const Icon(
+                  Icons.account_circle_outlined,
+                  color: ColorConst.black,
+                  size: 28,
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Text(
+                    context.locale.languageCode == 'ky'
+                        ? 'Жүргүнчү'
+                        : 'Пассажир',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: ColorConst.black,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Row(
+                  children: [
+                    const Icon(Icons.star, color: ColorConst.black, size: 18),
+                    const SizedBox(width: 4),
+                    Text(
+                      order.customerRating.toStringAsFixed(2),
+                      style: const TextStyle(
                         fontSize: 16,
-                        fontWeight: FontWeight.w700,
+                        fontWeight: FontWeight.bold,
+                        color: ColorConst.black,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+
+            // Call / Wait Card Container
+            Container(
+              decoration: BoxDecoration(
+                color: ColorConst.lightGrey.withValues(alpha: 0.3),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Column(
+                children: [
+                  // Call Action Row
+                  InkWell(
+                    onTap: () {},
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(20),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 16,
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.phone_outlined,
+                            color: ColorConst.black,
+                            size: 24,
+                          ),
+                          const SizedBox(width: 14),
+                          Text(
+                            context.locale.languageCode == 'ky'
+                                ? 'Чалуу'
+                                : 'Позвонить',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: ColorConst.black,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  // Thin Divider
+                  const Padding(
+                    padding: EdgeInsets.only(left: 54),
+                    child: Divider(color: ColorConst.lightGrey, height: 1),
+                  ),
+                  // Wait Action Row
+                  InkWell(
+                    onTap: () {},
+                    borderRadius: const BorderRadius.vertical(
+                      bottom: Radius.circular(20),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 16,
+                      ),
+                      child: Row(
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                width: 4,
+                                height: 18,
+                                decoration: BoxDecoration(
+                                  color: ColorConst.black,
+                                  borderRadius: BorderRadius.circular(2),
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              Container(
+                                width: 4,
+                                height: 18,
+                                decoration: BoxDecoration(
+                                  color: ColorConst.black,
+                                  borderRadius: BorderRadius.circular(2),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(width: 20),
+                          Text(
+                            context.locale.languageCode == 'ky'
+                                ? 'Күтүү'
+                                : 'Ожидание',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: ColorConst.black,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
                 ],
               ),
-            ],
-          ),
+            ),
+            const SizedBox(height: 24),
+
+            // Yellow SwipeActionButton
+            SwipeActionButton(
+              key: ValueKey(order.activePhase),
+              label: _swipeLabel,
+              isLoading: widget.isLoading,
+              backgroundColor: ColorConst.primary,
+              borderColor: ColorConst.primary,
+              textColor: ColorConst.white,
+              thumbColor: ColorConst.white,
+              thumbIconColor: ColorConst.black,
+              onConfirmed: widget.onArrived ?? () {},
+            ),
+          ],
+        ),
 
         // Phase 4: Completed, review & tips
         ActiveOrderPhase.completed => Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                _statusLabel,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w800,
-                  color: ColorConst.grey,
-                ),
-                textAlign: TextAlign.center,
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              _statusLabel,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                color: ColorConst.grey,
               ),
-              const SizedBox(height: 16),
-              Center(
-                child: CircleAvatar(
-                  radius: 44,
-                  backgroundImage: order.customerAvatarUrl != null
-                      ? NetworkImage(order.customerAvatarUrl!)
-                      : null,
-                  backgroundColor: ColorConst.lightGrey,
-                ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            Center(
+              child: CircleAvatar(
+                radius: 44,
+                backgroundImage: order.customerAvatarUrl != null
+                    ? NetworkImage(order.customerAvatarUrl!)
+                    : null,
+                backgroundColor: ColorConst.lightGrey,
               ),
-              const SizedBox(height: 8),
-              Text(
-                order.customerName,
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w800,
-                  color: ColorConst.black,
-                ),
-                textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              order.customerName,
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w800,
+                color: ColorConst.black,
               ),
-              const SizedBox(height: 12),
-              _StarRatingWidget(
-                initialRating: _selectedRating,
-                onRatingChanged: (val) {
-                  setState(() {
-                    _selectedRating = val;
-                  });
-                },
-              ),
-              const SizedBox(height: 20),
-              const _DetailChipsContainer(),
-              const SizedBox(height: 16),
-              _RouteSummaryCard(
-                pickup: order.pickupAddress,
-                destination: order.destinationAddress,
-              ),
-              const SizedBox(height: 16),
-              _PaymentCard(price: order.price, showTips: true),
-              const SizedBox(height: 20),
-              SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: FilledButton(
-                  onPressed: widget.isLoading ? null : widget.onComplete,
-                  style: FilledButton.styleFrom(
-                    backgroundColor: const Color(0xFF3544F1), // The premium deep blue color
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 12),
+            _StarRatingWidget(
+              initialRating: _selectedRating,
+              onRatingChanged: (val) {
+                setState(() {
+                  _selectedRating = val;
+                });
+              },
+            ),
+            const SizedBox(height: 20),
+            const _DetailChipsContainer(),
+            const SizedBox(height: 16),
+            _RouteSummaryCard(
+              pickup: order.pickupAddress,
+              destination: order.destinationAddress,
+            ),
+            const SizedBox(height: 16),
+            _PaymentCard(price: order.price, showTips: true),
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              height: 56,
+              child: FilledButton(
+                onPressed: widget.isLoading ? null : widget.onComplete,
+                style: FilledButton.styleFrom(
+                  backgroundColor: const Color(
+                    0xFF3544F1,
+                  ), // The premium deep blue color
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
                   ),
-                  child: widget.isLoading
-                      ? const CircularProgressIndicator(color: ColorConst.white)
-                      : const Text(
-                          'Готово',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                            color: ColorConst.white,
-                          ),
-                        ),
                 ),
+                child: widget.isLoading
+                    ? const CircularProgressIndicator(color: ColorConst.white)
+                    : const Text(
+                        'Готово',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: ColorConst.white,
+                        ),
+                      ),
               ),
-            ],
-          ),
+            ),
+          ],
+        ),
       },
     );
   }
@@ -351,10 +636,7 @@ class _HomeActiveOrderPanelState extends State<HomeActiveOrderPanel> {
 // ----------------------------------------------------
 
 class _RouteSummaryCard extends StatelessWidget {
-  const _RouteSummaryCard({
-    required this.pickup,
-    required this.destination,
-  });
+  const _RouteSummaryCard({required this.pickup, required this.destination});
 
   final String pickup;
   final String destination;
@@ -416,66 +698,6 @@ class _RouteSummaryCard extends StatelessWidget {
   }
 }
 
-class _TimelineProgressBarCard extends StatelessWidget {
-  const _TimelineProgressBarCard();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: ColorConst.lightGrey.withValues(alpha: 0.3),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              _buildTimelineItem('Старт', '10:20'),
-              _buildTimelineItem('На дороге', '16 мин', isBold: true),
-              _buildTimelineItem('Финиш', '10:40'),
-            ],
-          ),
-          const SizedBox(height: 12),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(4),
-            child: const LinearProgressIndicator(
-              value: 0.65,
-              backgroundColor: ColorConst.lightGrey,
-              valueColor: AlwaysStoppedAnimation<Color>(ColorConst.success),
-              minHeight: 6,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTimelineItem(String label, String value, {bool isBold = false}) {
-    return Column(
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 12,
-            color: ColorConst.grey,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 15,
-            fontWeight: isBold ? FontWeight.w800 : FontWeight.w600,
-            color: ColorConst.black,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
 class _PassengerCard extends StatelessWidget {
   const _PassengerCard({
     required this.name,
@@ -500,7 +722,9 @@ class _PassengerCard extends StatelessWidget {
         children: [
           CircleAvatar(
             radius: 24,
-            backgroundImage: avatarUrl != null ? NetworkImage(avatarUrl!) : null,
+            backgroundImage: avatarUrl != null
+                ? NetworkImage(avatarUrl!)
+                : null,
             backgroundColor: ColorConst.lightGrey,
             child: avatarUrl == null
                 ? const Icon(Icons.person, color: ColorConst.grey)
@@ -539,7 +763,11 @@ class _PassengerCard extends StatelessWidget {
           ),
           IconButton(
             onPressed: () {},
-            icon: const Icon(Icons.phone_in_talk, color: ColorConst.black, size: 20),
+            icon: const Icon(
+              Icons.phone_in_talk,
+              color: ColorConst.black,
+              size: 20,
+            ),
             style: IconButton.styleFrom(
               backgroundColor: ColorConst.lightGrey.withValues(alpha: 0.4),
               padding: const EdgeInsets.all(12),
@@ -548,7 +776,11 @@ class _PassengerCard extends StatelessWidget {
           const SizedBox(width: 8),
           IconButton(
             onPressed: () {},
-            icon: const Icon(Icons.chat_bubble, color: ColorConst.black, size: 20),
+            icon: const Icon(
+              Icons.chat_bubble,
+              color: ColorConst.black,
+              size: 20,
+            ),
             style: IconButton.styleFrom(
               backgroundColor: ColorConst.lightGrey.withValues(alpha: 0.4),
               padding: const EdgeInsets.all(12),
@@ -561,10 +793,7 @@ class _PassengerCard extends StatelessWidget {
 }
 
 class _PaymentCard extends StatelessWidget {
-  const _PaymentCard({
-    required this.price,
-    this.showTips = false,
-  });
+  const _PaymentCard({required this.price, this.showTips = false});
 
   final String price;
   final bool showTips;
@@ -605,7 +834,10 @@ class _PaymentCard extends StatelessWidget {
               if (showTips) ...[
                 const SizedBox(width: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: ColorConst.success.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
@@ -669,14 +901,18 @@ class _WaitingTimerCard extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
-                  color: isPaidWaiting ? ColorConst.grey.withValues(alpha: 0.5) : ColorConst.primary,
+                  color: isPaidWaiting
+                      ? ColorConst.grey.withValues(alpha: 0.5)
+                      : ColorConst.primary,
                 ),
               ),
               Row(
                 children: [
                   Icon(
                     Icons.play_arrow,
-                    color: isPaidWaiting ? ColorConst.grey.withValues(alpha: 0.5) : ColorConst.primary,
+                    color: isPaidWaiting
+                        ? ColorConst.grey.withValues(alpha: 0.5)
+                        : ColorConst.primary,
                     size: 20,
                   ),
                   const SizedBox(width: 6),
@@ -685,7 +921,9 @@ class _WaitingTimerCard extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
-                      color: isPaidWaiting ? ColorConst.grey.withValues(alpha: 0.5) : ColorConst.primary,
+                      color: isPaidWaiting
+                          ? ColorConst.grey.withValues(alpha: 0.5)
+                          : ColorConst.primary,
                     ),
                   ),
                 ],
@@ -714,11 +952,7 @@ class _WaitingTimerCard extends StatelessWidget {
                 ),
                 Row(
                   children: [
-                    const Icon(
-                      Icons.pause,
-                      color: ColorConst.white,
-                      size: 20,
-                    ),
+                    const Icon(Icons.pause, color: ColorConst.white, size: 20),
                     const SizedBox(width: 6),
                     Text(
                       timerText,
@@ -789,9 +1023,17 @@ class _DetailChipsContainer extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
           _buildItem('Дорога', '4 км'),
-          Container(width: 1, height: 36, color: ColorConst.grey.withValues(alpha: 0.3)),
+          Container(
+            width: 1,
+            height: 36,
+            color: ColorConst.grey.withValues(alpha: 0.3),
+          ),
           _buildItem('На дороге', '20 мин'),
-          Container(width: 1, height: 36, color: ColorConst.grey.withValues(alpha: 0.3)),
+          Container(
+            width: 1,
+            height: 36,
+            color: ColorConst.grey.withValues(alpha: 0.3),
+          ),
           _buildItem('Прибытие', '10:40'),
         ],
       ),
@@ -897,10 +1139,7 @@ class _ActiveStatusHeader extends StatelessWidget {
           Container(
             width: 8,
             height: 8,
-            decoration: BoxDecoration(
-              color: color,
-              shape: BoxShape.circle,
-            ),
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
           ),
           const SizedBox(width: 8),
           Text(
