@@ -12,11 +12,11 @@ import 'package:bazzone_driver/features/home/presentation/widgets/home_map_top_b
 import 'package:bazzone_driver/features/home/presentation/widgets/home_map_view.dart';
 import 'package:bazzone_driver/features/home/presentation/widgets/home_sheet_content.dart';
 import 'package:bazzone_driver/features/home/presentation/widgets/map_overlay_button.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:easy_localization/easy_localization.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
 @RoutePage(name: 'HomeRoute')
@@ -64,7 +64,9 @@ class _HomeViewState extends State<_HomeView> {
     return switch (phase) {
       ActiveOrderPhase.headingToClient => 'Ехать 4 мин',
       ActiveOrderPhase.waitingForClient =>
-        _isPaidWaitingNotifier.value ? 'Начинается платное ожидание' : 'Вы на месте',
+        _isPaidWaitingNotifier.value
+            ? 'Начинается платное ожидание'
+            : 'Вы на месте',
       ActiveOrderPhase.headingToDestination => 'Ехать 4 мин',
       ActiveOrderPhase.completed => '',
     };
@@ -98,7 +100,10 @@ class _HomeViewState extends State<_HomeView> {
   /// setState YOK → _HomeView rebuild yok.
   void _onSizeChanged() {
     final size = _sheetController.size;
-    final config = HomeDriverSheet.getConfig(_currentPhase, _currentActivePhase);
+    final config = HomeDriverSheet.getConfig(
+      _currentPhase,
+      _currentActivePhase,
+    );
     final isExpanded =
         (size - config.minSize) > (config.maxSize - config.minSize) * 0.5;
     if (_isExpandedNotifier.value != isExpanded) {
@@ -119,7 +124,10 @@ class _HomeViewState extends State<_HomeView> {
 
   void _expandSheet() {
     if (!_sheetController.isAttached) return;
-    final config = HomeDriverSheet.getConfig(_currentPhase, _currentActivePhase);
+    final config = HomeDriverSheet.getConfig(
+      _currentPhase,
+      _currentActivePhase,
+    );
     _animateSheetTo(config.maxSize);
   }
 
@@ -197,8 +205,9 @@ class _HomeViewState extends State<_HomeView> {
               current.session?.activeOrder?.activePhase,
       listener: (context, state) {
         if (state.errorMessage != null) {
-          ScaffoldMessenger.of(context)
-              .showSnackBar(SnackBar(content: Text(state.errorMessage!)));
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(state.errorMessage!)));
         }
 
         final phase = state.sheetPhase ?? HomeSheetPhase.driverSummary;
@@ -275,33 +284,63 @@ class _HomeViewState extends State<_HomeView> {
                       ]),
                       builder: (context, _) {
                         final sheetSize = _sheetController.size;
-                        final mapBottomPadding =
-                            sheetSize * constraints.maxHeight;
+                        final screenHeight = MediaQuery.sizeOf(context).height;
+                        final mapBottomPadding = sheetSize * screenHeight;
+                        final config = HomeDriverSheet.getConfig(
+                          sheetPhase,
+                          activePhase,
+                        );
+                        final collapsedPadding = config.minSize * screenHeight;
+                        final isDestination =
+                            session.activeOrder?.activePhase ==
+                            ActiveOrderPhase.headingToDestination;
+
+                        // Sürükleme yüzdesi (0.0 = kapalı, 1.0 = 0.10 kadar yukarı çekilmiş)
+                        final dragProgress =
+                            ((sheetSize - config.minSize) / 0.10).clamp(
+                              0.0,
+                              1.0,
+                            );
+                        final trafficCardOpacity = 1.0 - dragProgress;
+
                         return Stack(
                           children: [
                             Positioned(
                               right: 16,
-                              bottom: mapBottomPadding + 16 +
-                                  (session.activeOrder?.activePhase ==
-                                          ActiveOrderPhase.headingToDestination
-                                      ? 84.0
+                              bottom:
+                                  mapBottomPadding +
+                                  12 +
+                                  (isDestination
+                                      ? 84.0 * trafficCardOpacity
                                       : 0.0),
-                              child: MapOverlayButton(
-                                path: AssetConst.filledLocation,
-                                onPressed: _animateToCurrentPosition,
+                              child: IgnorePointer(
+                                ignoring: sheetSize >= 0.6,
+                                child: Opacity(
+                                  opacity: (1.0 - ((sheetSize - 0.5) / 0.10))
+                                      .clamp(0.0, 1.0),
+                                  child: MapOverlayButton(
+                                    path: AssetConst.filledLocation,
+                                    onPressed: _animateToCurrentPosition,
+                                  ),
+                                ),
                               ),
                             ),
                             if (session.activeOrder != null &&
                                 session.activeOrder!.activePhase !=
                                     ActiveOrderPhase.completed)
-                              if (session.activeOrder!.activePhase ==
-                                  ActiveOrderPhase.headingToDestination)
+                              if (isDestination)
                                 Positioned(
                                   left: 16,
                                   right: 16,
-                                  bottom: mapBottomPadding + 16,
-                                  child: _FloatingTrafficProgressCard(
-                                    order: session.activeOrder!,
+                                  bottom: collapsedPadding + 12,
+                                  child: IgnorePointer(
+                                    ignoring: dragProgress > 0.8,
+                                    child: Opacity(
+                                      opacity: trafficCardOpacity,
+                                      child: _FloatingTrafficProgressCard(
+                                        order: session.activeOrder!,
+                                      ),
+                                    ),
                                   ),
                                 )
                               else
@@ -452,12 +491,30 @@ class _FloatingTrafficProgressCard extends StatelessWidget {
                     height: 6,
                     child: Row(
                       children: [
-                        Expanded(flex: 5, child: Container(color: ColorConst.success)),
-                        Expanded(flex: 1, child: Container(color: Colors.yellow)),
-                        Expanded(flex: 1, child: Container(color: ColorConst.error)),
-                        Expanded(flex: 4, child: Container(color: ColorConst.success)),
-                        Expanded(flex: 1, child: Container(color: Colors.yellow)),
-                        Expanded(flex: 2, child: Container(color: ColorConst.success)),
+                        Expanded(
+                          flex: 5,
+                          child: Container(color: ColorConst.success),
+                        ),
+                        Expanded(
+                          flex: 1,
+                          child: Container(color: Colors.yellow),
+                        ),
+                        Expanded(
+                          flex: 1,
+                          child: Container(color: ColorConst.error),
+                        ),
+                        Expanded(
+                          flex: 4,
+                          child: Container(color: ColorConst.success),
+                        ),
+                        Expanded(
+                          flex: 1,
+                          child: Container(color: Colors.yellow),
+                        ),
+                        Expanded(
+                          flex: 2,
+                          child: Container(color: ColorConst.success),
+                        ),
                       ],
                     ),
                   ),

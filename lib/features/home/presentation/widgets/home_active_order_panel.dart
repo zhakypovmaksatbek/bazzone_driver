@@ -529,7 +529,7 @@ class _HomeActiveOrderPanelState extends State<HomeActiveOrderPanel> {
                 ],
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 14),
 
             // Yellow SwipeActionButton
             SwipeActionButton(

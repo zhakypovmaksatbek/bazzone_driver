@@ -16,27 +16,31 @@ class MapOverlayButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onPressed,
-        customBorder: const CircleBorder(),
-        child: Ink(
-          width: size,
-          height: size,
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: ColorConst.white,
-            shape: BoxShape.circle,
-            boxShadow: [
-              BoxShadow(
-                color: ColorConst.black.withValues(alpha: 0.08),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
-              ),
-            ],
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: ColorConst.black.withValues(alpha: 0.08),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
           ),
-          child: CustomAssetImage(path: path),
+        ],
+      ),
+      child: Material(
+        color: ColorConst.white,
+        shape: const CircleBorder(),
+        child: InkWell(
+          onTap: onPressed,
+          customBorder: const CircleBorder(),
+          child: SizedBox(
+            width: size,
+            height: size,
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: CustomAssetImage(path: path),
+            ),
+          ),
         ),
       ),
     );

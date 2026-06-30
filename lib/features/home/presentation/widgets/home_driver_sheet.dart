@@ -116,9 +116,9 @@ class HomeDriverSheet extends StatefulWidget {
           case ActiveOrderPhase.completed:
           default:
             return const HomeSheetConfig(
-              minSize: 0.20,
-              maxSize: 0.85,
-              initialSize: 0.85,
+              minSize: 0.10,
+              maxSize: 0.71,
+              initialSize: 0.71,
             );
         }
     }
@@ -406,7 +406,7 @@ class _SheetSurfaceState extends State<_SheetSurface> {
                 controller: _scroll,
                 physics: const NeverScrollableScrollPhysics(),
                 padding: EdgeInsets.only(
-                  bottom: MediaQuery.paddingOf(context).bottom + 16,
+                  bottom: MediaQuery.paddingOf(context).bottom,
                 ),
                 child: widget.child,
               ),
