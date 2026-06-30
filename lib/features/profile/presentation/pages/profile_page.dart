@@ -170,6 +170,7 @@ class _ProfilePageState extends State<ProfilePage> {
                         item: _menuItems[0],
                         onTap: () => _onMenuTap(_menuItems[0]),
                         showDivider: false,
+                        borderRadius: BorderRadius.circular(16),
                       ),
                   ],
                 ),
@@ -192,11 +193,17 @@ class _ProfilePageState extends State<ProfilePage> {
                         item: _menuItems[1],
                         onTap: () => _onMenuTap(_menuItems[1]),
                         showDivider: true,
+                        borderRadius: BorderRadius.vertical(
+                          top: Radius.circular(24),
+                        ),
                       ),
                       ProfileMenuTile(
                         item: _menuItems[2],
                         onTap: () => _onMenuTap(_menuItems[2]),
                         showDivider: false,
+                        borderRadius: BorderRadius.vertical(
+                          bottom: Radius.circular(24),
+                        ),
                       ),
                     ],
                   ],
@@ -220,6 +227,9 @@ class _ProfilePageState extends State<ProfilePage> {
                         item: _menuItems[3],
                         onTap: () => _onMenuTap(_menuItems[3]),
                         showDivider: true,
+                        borderRadius: BorderRadius.vertical(
+                          top: Radius.circular(24),
+                        ),
                       ),
                       ProfileMenuTile(
                         item: _menuItems[4],
@@ -230,6 +240,9 @@ class _ProfilePageState extends State<ProfilePage> {
                         item: _menuItems[5],
                         onTap: () => _onMenuTap(_menuItems[5]),
                         showDivider: false,
+                        borderRadius: BorderRadius.vertical(
+                          bottom: Radius.circular(24),
+                        ),
                       ),
                     ],
                   ],
