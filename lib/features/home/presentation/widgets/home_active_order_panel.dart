@@ -101,7 +101,7 @@ class _HomeActiveOrderPanelState extends State<HomeActiveOrderPanel> {
       LocaleKeys.home_page_arrived_at_client.tr(),
     ActiveOrderPhase.headingToDestination =>
       LocaleKeys.home_page_en_route_to_destination.tr(),
-    ActiveOrderPhase.completed => 'Отзыв о поездке',
+    ActiveOrderPhase.completed => LocaleKeys.home_page_trip_review.tr(),
   };
 
   String get _swipeLabel => switch (widget.order.activePhase) {
@@ -144,8 +144,8 @@ class _HomeActiveOrderPanelState extends State<HomeActiveOrderPanel> {
                       border: Border.all(color: ColorConst.black, width: 2),
                     ),
                     alignment: Alignment.center,
-                    child: const Text(
-                      'Б',
+                    child: Text(
+                      LocaleKeys.home_page_destination_point.tr(),
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 15,
@@ -197,9 +197,7 @@ class _HomeActiveOrderPanelState extends State<HomeActiveOrderPanel> {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      context.locale.languageCode == 'ky'
-                          ? 'Накталай төлөө'
-                          : 'Оплата наличными',
+                      LocaleKeys.home_page_cash_payment.tr(),
                       style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -307,8 +305,8 @@ class _HomeActiveOrderPanelState extends State<HomeActiveOrderPanel> {
                     border: Border.all(color: ColorConst.black, width: 2),
                   ),
                   alignment: Alignment.center,
-                  child: const Text(
-                    'Б',
+                  child: Text(
+                    LocaleKeys.home_page_destination_point.tr(),
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 15,
@@ -354,9 +352,7 @@ class _HomeActiveOrderPanelState extends State<HomeActiveOrderPanel> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        context.locale.languageCode == 'ky'
-                            ? 'Накталай төлөө'
-                            : 'Оплата наличными',
+                        LocaleKeys.home_page_cash_payment.tr(),
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
@@ -365,9 +361,7 @@ class _HomeActiveOrderPanelState extends State<HomeActiveOrderPanel> {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        context.locale.languageCode == 'ky'
-                            ? 'Тыгындарды эске алганда сапардын баасы'
-                            : 'Стоимость поездки с учетом пробок',
+                        LocaleKeys.home_page_trip_price_with_traffic.tr(),
                         style: const TextStyle(
                           fontSize: 12,
                           color: ColorConst.grey,
@@ -402,9 +396,7 @@ class _HomeActiveOrderPanelState extends State<HomeActiveOrderPanel> {
                 const SizedBox(width: 14),
                 Expanded(
                   child: Text(
-                    context.locale.languageCode == 'ky'
-                        ? 'Жүргүнчү'
-                        : 'Пассажир',
+                    LocaleKeys.home_page_passenger.tr(),
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
@@ -459,9 +451,7 @@ class _HomeActiveOrderPanelState extends State<HomeActiveOrderPanel> {
                           ),
                           const SizedBox(width: 14),
                           Text(
-                            context.locale.languageCode == 'ky'
-                                ? 'Чалуу'
-                                : 'Позвонить',
+                            LocaleKeys.home_page_call.tr(),
                             style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
@@ -513,9 +503,7 @@ class _HomeActiveOrderPanelState extends State<HomeActiveOrderPanel> {
                           ),
                           const SizedBox(width: 20),
                           Text(
-                            context.locale.languageCode == 'ky'
-                                ? 'Күтүү'
-                                : 'Ожидание',
+                            LocaleKeys.home_page_waiting.tr(),
                             style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
@@ -614,8 +602,8 @@ class _HomeActiveOrderPanelState extends State<HomeActiveOrderPanel> {
                 ),
                 child: widget.isLoading
                     ? const CircularProgressIndicator(color: ColorConst.white)
-                    : const Text(
-                        'Готово',
+                    : Text(
+                        LocaleKeys.button_done.tr(),
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
@@ -815,7 +803,9 @@ class _PaymentCard extends StatelessWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  showTips ? 'Оплачено картой' : 'Оплата картой',
+                  showTips
+                      ? LocaleKeys.home_page_card_payment_paid.tr()
+                      : LocaleKeys.home_page_card_payment.tr(),
                   style: const TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w500,
@@ -856,8 +846,8 @@ class _PaymentCard extends StatelessWidget {
           ),
           if (showTips) ...[
             const SizedBox(height: 8),
-            const Text(
-              'Оставили чаевые',
+            Text(
+              LocaleKeys.home_page_tips_left.tr(),
               style: TextStyle(
                 color: ColorConst.success,
                 fontSize: 13,
@@ -897,7 +887,7 @@ class _WaitingTimerCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Бесплатное ожидание',
+                LocaleKeys.home_page_free_waiting.tr(),
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
@@ -942,8 +932,8 @@ class _WaitingTimerCard extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
-                  'Платное ожидание',
+                Text(
+                  LocaleKeys.home_page_paid_waiting.tr(),
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
@@ -989,8 +979,8 @@ class _PickupLabelCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Подача',
+          Text(
+            LocaleKeys.home_page_pickup.tr(),
             style: TextStyle(fontSize: 12, color: ColorConst.grey),
           ),
           const SizedBox(height: 6),
@@ -1022,19 +1012,25 @@ class _DetailChipsContainer extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          _buildItem('Дорога', '4 км'),
+          _buildItem(
+            LocaleKeys.home_page_road.tr(),
+            LocaleKeys.home_page_km.tr(args: ['4']),
+          ),
           Container(
             width: 1,
             height: 36,
             color: ColorConst.grey.withValues(alpha: 0.3),
           ),
-          _buildItem('На дороге', '20 мин'),
+          _buildItem(
+            LocaleKeys.home_page_on_the_road.tr(),
+            LocaleKeys.home_page_minutes_short.tr(args: ['20']),
+          ),
           Container(
             width: 1,
             height: 36,
             color: ColorConst.grey.withValues(alpha: 0.3),
           ),
-          _buildItem('Прибытие', '10:40'),
+          _buildItem(LocaleKeys.home_page_arrival.tr(), '10:40'),
         ],
       ),
     );

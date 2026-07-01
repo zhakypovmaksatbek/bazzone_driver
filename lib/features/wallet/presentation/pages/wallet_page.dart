@@ -8,6 +8,7 @@ import 'package:bazzone_driver/features/wallet/presentation/widgets/wallet_actio
 import 'package:bazzone_driver/features/wallet/presentation/widgets/wallet_balance_section.dart';
 import 'package:bazzone_driver/features/wallet/presentation/widgets/wallet_header.dart';
 import 'package:bazzone_driver/features/wallet/presentation/widgets/wallet_transaction_list.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
@@ -28,7 +29,7 @@ class _WalletPageState extends State<WalletPage> {
   @override
   void initState() {
     super.initState();
-    initializeDateFormatting('ru');
+    initializeDateFormatting(context.locale.languageCode);
     _loadSummary();
   }
 
@@ -53,7 +54,7 @@ class _WalletPageState extends State<WalletPage> {
       firstDate: DateTime(2020),
       lastDate: DateTime.now(),
       initialDatePickerMode: DatePickerMode.year,
-      locale: const Locale('ru'),
+      locale: context.locale,
     );
 
     if (picked == null || !mounted) return;

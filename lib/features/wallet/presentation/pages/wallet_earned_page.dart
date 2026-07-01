@@ -11,10 +11,7 @@ import 'package:intl/date_symbol_data_local.dart';
 
 @RoutePage(name: 'WalletEarnedRoute')
 class WalletEarnedPage extends StatefulWidget {
-  const WalletEarnedPage({
-    super.key,
-    this.initialMonth,
-  });
+  const WalletEarnedPage({super.key, this.initialMonth});
 
   final DateTime? initialMonth;
 
@@ -58,7 +55,7 @@ class _WalletEarnedPageState extends State<WalletEarnedPage> {
       firstDate: DateTime(2020),
       lastDate: DateTime.now(),
       initialDatePickerMode: DatePickerMode.year,
-      locale: const Locale('ru'),
+      locale: context.locale,
     );
 
     if (picked == null || !mounted) return;
@@ -111,9 +108,7 @@ class _WalletEarnedPageState extends State<WalletEarnedPage> {
                     contentPadding: EdgeInsets.zero,
                     leading: Icon(
                       Icons.credit_card_rounded,
-                      color: isSelected
-                          ? ColorConst.primary
-                          : ColorConst.grey,
+                      color: isSelected ? ColorConst.primary : ColorConst.grey,
                     ),
                     title: Text(
                       card.label,
@@ -154,9 +149,7 @@ class _WalletEarnedPageState extends State<WalletEarnedPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _WalletEarnedAppBar(
-              onBack: () => context.router.maybePop(),
-            ),
+            _WalletEarnedAppBar(onBack: () => context.router.maybePop()),
             Expanded(
               child: _isLoading
                   ? const Center(child: CircularProgressIndicator())

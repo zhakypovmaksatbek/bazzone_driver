@@ -11,6 +11,7 @@ import 'package:bazzone_driver/features/home/presentation/widgets/home_driver_sh
 import 'package:bazzone_driver/features/home/presentation/widgets/home_map_top_bar.dart';
 import 'package:bazzone_driver/features/home/presentation/widgets/home_map_view.dart';
 import 'package:bazzone_driver/features/home/presentation/widgets/home_sheet_content.dart';
+import 'package:bazzone_driver/generated/locale_keys.g.dart';
 import 'package:bazzone_driver/features/home/presentation/widgets/map_overlay_button.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
@@ -430,9 +431,9 @@ class _FloatingTrafficProgressCard extends StatelessWidget {
         "${arrivalTime.hour.toString().padLeft(2, '0')}:${arrivalTime.minute.toString().padLeft(2, '0')}";
 
     final durationMin = (order.distanceToPointKm * 3).round();
-    final durationStr = context.locale.languageCode == 'ky'
-        ? "$durationMin мүн"
-        : "$durationMin мин";
+    final durationStr = LocaleKeys.home_page_minutes_short.tr(
+      args: [durationMin.toString()],
+    );
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -454,7 +455,9 @@ class _FloatingTrafficProgressCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                "${order.distanceToPointKm} км",
+                LocaleKeys.home_page_km.tr(
+                  args: [order.distanceToPointKm.toString()],
+                ),
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
