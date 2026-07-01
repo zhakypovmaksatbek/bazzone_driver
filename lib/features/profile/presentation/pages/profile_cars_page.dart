@@ -1,4 +1,5 @@
 import 'package:auto_route/auto_route.dart';
+import 'package:bazzone_driver/app/router/app_router.dart';
 import 'package:bazzone_driver/core/theme/color_const.dart';
 import 'package:bazzone_driver/features/profile/data/datasources/profile_mock_datasource.dart';
 import 'package:bazzone_driver/features/profile/domain/entities/driver_car.dart';
@@ -75,7 +76,7 @@ class _ProfileCarsPageState extends State<ProfileCarsPage> {
               width: double.infinity,
               height: 52,
               child: FilledButton(
-                onPressed: () {},
+                onPressed: () => context.router.push(const ProfileCarDiagnosticsRoute()),
                 style: FilledButton.styleFrom(
                   backgroundColor: ColorConst.primary,
                   shape: RoundedRectangleBorder(

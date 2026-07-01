@@ -62,7 +62,10 @@ class _ProfilePageState extends State<ProfilePage> {
         router.push(const ProfileTaxiParkRoute());
       case ProfileMenuType.carDiagnostics:
       case ProfileMenuType.photoDiagnostics:
+        router.push(const ProfileCarDiagnosticsRoute());
+        break;
       case ProfileMenuType.tariffs:
+        router.push(const ProfileTariffsRoute());
         break;
     }
   }
@@ -115,7 +118,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     ),
                     child: IconButton(
                       padding: EdgeInsets.zero,
-                      onPressed: () {},
+                      onPressed: () => router.push(const ProfileSettingsRoute()),
                       icon: const Icon(
                         Icons.settings_outlined,
                         color: ColorConst.black,

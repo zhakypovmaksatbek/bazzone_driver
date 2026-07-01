@@ -23,9 +23,8 @@ final class AppLocalization extends EasyLocalization {
 }
 
 enum Locales {
-  ru(Locale('ru'), LocaleKeys.general_ru);
-  // en(Locale('en'), LocaleKeys.general_en),
-  // ky(Locale('ky'), LocaleKeys.general_ky);
+  ru(Locale('ru'), LocaleKeys.general_ru),
+  ky(Locale('ky'), LocaleKeys.general_ky);
 
   final Locale locale;
   final String displayName;

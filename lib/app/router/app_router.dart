@@ -4,9 +4,14 @@ import 'package:bazzone_driver/features/auth/presentation/pages/verify_page.dart
 import 'package:bazzone_driver/features/home/presentation/pages/home_page.dart';
 import 'package:bazzone_driver/features/main/presentation/pages/main_page.dart';
 import 'package:bazzone_driver/features/orders/presentation/pages/orders_page.dart';
+import 'package:bazzone_driver/features/profile/presentation/pages/custom_camera_page.dart';
+import 'package:bazzone_driver/features/profile/presentation/pages/profile_car_diagnostics_page.dart';
 import 'package:bazzone_driver/features/profile/presentation/pages/profile_cars_page.dart';
 import 'package:bazzone_driver/features/profile/presentation/pages/profile_page.dart';
 import 'package:bazzone_driver/features/profile/presentation/pages/profile_taxi_park_page.dart';
+import 'package:bazzone_driver/features/profile/presentation/pages/profile_settings_page.dart';
+import 'package:bazzone_driver/features/profile/presentation/pages/profile_tariffs_addition_page.dart';
+import 'package:bazzone_driver/features/profile/presentation/pages/profile_tariffs_page.dart';
 import 'package:bazzone_driver/features/profile/presentation/pages/profile_trip_history_page.dart';
 import 'package:bazzone_driver/features/splash/presentation/pages/splash_page.dart';
 import 'package:bazzone_driver/features/support/presentation/pages/support_chat_page.dart';
@@ -29,6 +34,11 @@ class AppRouter extends RootStackRouter {
     AutoRoute(page: ProfileCarsRoute.page),
     AutoRoute(page: ProfileTaxiParkRoute.page),
     AutoRoute(page: ProfileTripHistoryRoute.page),
+    AutoRoute(page: ProfileCarDiagnosticsRoute.page),
+    AutoRoute(page: ProfileSettingsRoute.page),
+    AutoRoute(page: ProfileTariffsRoute.page),
+    AutoRoute(page: ProfileTariffsAdditionRoute.page),
+    AutoRoute(page: CustomCameraRoute.page),
     AutoRoute(
       page: MainRoute.page,
       initial: true,

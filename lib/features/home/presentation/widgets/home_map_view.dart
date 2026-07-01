@@ -7,11 +7,13 @@ class HomeMapView extends StatelessWidget {
     super.key,
     required this.currentPosition,
     required this.bottomPadding,
+    required this.markers,
     this.onMapCreated,
   });
 
   final LatLng currentPosition;
   final double bottomPadding;
+  final Set<Marker> markers;
   final ValueChanged<GoogleMapController>? onMapCreated;
 
   @override
@@ -22,11 +24,12 @@ class HomeMapView extends StatelessWidget {
         zoom: MapConst.defaultZoom,
       ),
       onMapCreated: onMapCreated,
-      myLocationEnabled: true,
+      myLocationEnabled: false,
       myLocationButtonEnabled: false,
       zoomControlsEnabled: false,
       compassEnabled: false,
       mapToolbarEnabled: false,
+      markers: markers,
       padding: EdgeInsets.only(top: 88, bottom: bottomPadding, right: 16),
     );
   }

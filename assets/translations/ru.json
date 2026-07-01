@@ -110,6 +110,19 @@
         "registration_certificate": "Свидетельство о регистрации",
         "vin_or_state_number": "VIN или гос номер"
     },
+    "car_diagnostics_page": {
+        "title": "Диагностика авто",
+        "back_seat": "Заднее сиденье",
+        "front_seat": "Переднее сиденье",
+        "left_side": "Левая сторона",
+        "right_side": "Правая сторона",
+        "front_part": "Передняя часть машины",
+        "back_part": "Задняя часть машины",
+        "open_trunk": "Открытый багажник",
+        "license_front": "Вод. удостоверение (лицевая сторона)",
+        "license_back": "Вод. удостоверение (обратная сторона)",
+        "next": "Далее"
+    },
     "profile_taxi_park_page": {
         "title": "О таксопарке",
         "commission": "{} Комиссия",
@@ -127,5 +140,38 @@
         "title": "История заказов",
         "today": "Сегодня",
         "yesterday": "Вчера"
+    },
+    "profile_settings_page": {
+        "title": "Настройки",
+        "sound_notifications": "Уведомления со звуком",
+        "languages": "Языки",
+        "privacy_policy": "Политика конфиденциальности",
+        "app_permissions": "Разрешения на приложения",
+        "logout": "Выйти из профиля",
+        "logout_confirm_title": "Выход",
+        "logout_confirm_desc": "Вы уверены, что хотите выйти из профиля?",
+        "logout_confirm_yes": "Да, выйти",
+        "logout_confirm_no": "Отмена"
+    },
+    "profile_tariffs_page": {
+        "title": "Тарифы",
+        "economy": "Эконом",
+        "economy_desc": "Меньше комиссии — больше заказов",
+        "comfort": "Комфорт",
+        "comfort_desc": "Больше дохода за те же километры",
+        "comfort_plus": "Комфорт+",
+        "comfort_plus_desc": "Выше класс — выше заработок",
+        "commission_badge": "1% Комиссия",
+        "delivery": "Доставка",
+        "delivery_sub": "Subtitle",
+        "additional": "Дополнительно",
+        "additional_sub": "Subtitle",
+        "unlock_instruction": "Чтобы, разблокировать тарифы проведите диагностику"
+    },
+    "profile_tariffs_addition_page": {
+        "title": "Дополнительно",
+        "child_seat": "Детское кресло",
+        "pet_transport": "Перевозка домашних животных",
+        "food_delivery": "Доставка еды"
     }
 }

@@ -11,6 +11,70 @@
 part of 'app_router.dart';
 
 /// generated route for
+/// [CustomCameraPage]
+class CustomCameraRoute extends PageRouteInfo<CustomCameraRouteArgs> {
+  CustomCameraRoute({
+    Key? key,
+    required String title,
+    required StencilType stencilType,
+    List<PageRouteInfo>? children,
+  }) : super(
+         CustomCameraRoute.name,
+         args: CustomCameraRouteArgs(
+           key: key,
+           title: title,
+           stencilType: stencilType,
+         ),
+         initialChildren: children,
+       );
+
+  static const String name = 'CustomCameraRoute';
+
+  static PageInfo page = PageInfo(
+    name,
+    builder: (data) {
+      final args = data.argsAs<CustomCameraRouteArgs>();
+      return CustomCameraPage(
+        key: args.key,
+        title: args.title,
+        stencilType: args.stencilType,
+      );
+    },
+  );
+}
+
+class CustomCameraRouteArgs {
+  const CustomCameraRouteArgs({
+    this.key,
+    required this.title,
+    required this.stencilType,
+  });
+
+  final Key? key;
+
+  final String title;
+
+  final StencilType stencilType;
+
+  @override
+  String toString() {
+    return 'CustomCameraRouteArgs{key: $key, title: $title, stencilType: $stencilType}';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    if (other is! CustomCameraRouteArgs) return false;
+    return key == other.key &&
+        title == other.title &&
+        stencilType == other.stencilType;
+  }
+
+  @override
+  int get hashCode => key.hashCode ^ title.hashCode ^ stencilType.hashCode;
+}
+
+/// generated route for
 /// [HomePage]
 class HomeRoute extends PageRouteInfo<void> {
   const HomeRoute({List<PageRouteInfo>? children})
@@ -75,6 +139,22 @@ class OtpRoute extends PageRouteInfo<void> {
 }
 
 /// generated route for
+/// [ProfileCarDiagnosticsPage]
+class ProfileCarDiagnosticsRoute extends PageRouteInfo<void> {
+  const ProfileCarDiagnosticsRoute({List<PageRouteInfo>? children})
+    : super(ProfileCarDiagnosticsRoute.name, initialChildren: children);
+
+  static const String name = 'ProfileCarDiagnosticsRoute';
+
+  static PageInfo page = PageInfo(
+    name,
+    builder: (data) {
+      return const ProfileCarDiagnosticsPage();
+    },
+  );
+}
+
+/// generated route for
 /// [ProfileCarsPage]
 class ProfileCarsRoute extends PageRouteInfo<void> {
   const ProfileCarsRoute({List<PageRouteInfo>? children})
@@ -102,6 +182,54 @@ class ProfileRoute extends PageRouteInfo<void> {
     name,
     builder: (data) {
       return const ProfilePage();
+    },
+  );
+}
+
+/// generated route for
+/// [ProfileSettingsPage]
+class ProfileSettingsRoute extends PageRouteInfo<void> {
+  const ProfileSettingsRoute({List<PageRouteInfo>? children})
+    : super(ProfileSettingsRoute.name, initialChildren: children);
+
+  static const String name = 'ProfileSettingsRoute';
+
+  static PageInfo page = PageInfo(
+    name,
+    builder: (data) {
+      return const ProfileSettingsPage();
+    },
+  );
+}
+
+/// generated route for
+/// [ProfileTariffsAdditionPage]
+class ProfileTariffsAdditionRoute extends PageRouteInfo<void> {
+  const ProfileTariffsAdditionRoute({List<PageRouteInfo>? children})
+    : super(ProfileTariffsAdditionRoute.name, initialChildren: children);
+
+  static const String name = 'ProfileTariffsAdditionRoute';
+
+  static PageInfo page = PageInfo(
+    name,
+    builder: (data) {
+      return const ProfileTariffsAdditionPage();
+    },
+  );
+}
+
+/// generated route for
+/// [ProfileTariffsPage]
+class ProfileTariffsRoute extends PageRouteInfo<void> {
+  const ProfileTariffsRoute({List<PageRouteInfo>? children})
+    : super(ProfileTariffsRoute.name, initialChildren: children);
+
+  static const String name = 'ProfileTariffsRoute';
+
+  static PageInfo page = PageInfo(
+    name,
+    builder: (data) {
+      return const ProfileTariffsPage();
     },
   );
 }

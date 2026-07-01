@@ -36,6 +36,10 @@
 	<string>Приложению нужен доступ к геолокации для отображения вашего местоположения на карте.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Приложению нужен доступ к геолокации для отображения вашего местоположения на карте.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Приложению нужен доступ к камере для выполнения фотодиагностики автомобиля и документов.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Приложению нужен доступ к фотогалерее для выбора фотографий.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

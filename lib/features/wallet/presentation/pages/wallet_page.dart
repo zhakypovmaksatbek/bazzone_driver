@@ -29,8 +29,11 @@ class _WalletPageState extends State<WalletPage> {
   @override
   void initState() {
     super.initState();
-    initializeDateFormatting(context.locale.languageCode);
-    _loadSummary();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      initializeDateFormatting(context.locale.languageCode);
+      _loadSummary();
+    });
   }
 
   Future<void> _loadSummary({DateTime? month}) async {

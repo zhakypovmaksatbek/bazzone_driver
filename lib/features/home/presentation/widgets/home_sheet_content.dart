@@ -43,6 +43,7 @@ class HomeSheetContent extends StatelessWidget {
               context.read<HomeBloc>().add(const HomeStartWorkRequested()),
           onFinishWork: () =>
               context.read<HomeBloc>().add(const HomeFinishWorkRequested()),
+          isStartWorkEnabled: session.profile.balance >= 100.0,
         ),
       HomeSheetPhase.orderOffer => HomeOrderOfferPanel(
           order: session.offeredOrder!,

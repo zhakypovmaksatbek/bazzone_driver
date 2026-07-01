@@ -21,6 +21,12 @@ class DriverSession {
 
   bool get isOnline => workStatus == DriverWorkStatus.online;
 
+  DriverWorkStatus get visualStatus {
+    if (workStatus == DriverWorkStatus.offline) return DriverWorkStatus.offline;
+    if (profile.balance < 100.0) return DriverWorkStatus.restricted;
+    return DriverWorkStatus.online;
+  }
+
   HomeSheetPhase get sheetPhase {
     if (activeOrder != null) return HomeSheetPhase.activeOrder;
     if (offeredOrder != null) return HomeSheetPhase.orderOffer;

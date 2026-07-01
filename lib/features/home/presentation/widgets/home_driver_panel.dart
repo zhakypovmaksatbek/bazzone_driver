@@ -17,6 +17,7 @@ class HomeDriverPanel extends StatelessWidget {
     this.onProfileTap,
     this.onStartWork,
     this.onFinishWork,
+    this.isStartWorkEnabled = true,
   });
 
   final String driverName;
@@ -29,6 +30,7 @@ class HomeDriverPanel extends StatelessWidget {
   final VoidCallback? onProfileTap;
   final VoidCallback? onStartWork;
   final VoidCallback? onFinishWork;
+  final bool isStartWorkEnabled;
 
   @override
   Widget build(BuildContext context) {
@@ -114,7 +116,11 @@ class HomeDriverPanel extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
           child: isOnline
               ? _FinishWorkButton(isLoading: isLoading, onPressed: onFinishWork)
-              : _StartWorkButton(isLoading: isLoading, onPressed: onStartWork),
+              : _StartWorkButton(
+                  isLoading: isLoading,
+                  onPressed: onStartWork,
+                  isEnabled: isStartWorkEnabled,
+                ),
         ),
       ],
     );
@@ -122,13 +128,72 @@ class HomeDriverPanel extends StatelessWidget {
 }
 
 class _StartWorkButton extends StatelessWidget {
-  const _StartWorkButton({this.isLoading = false, this.onPressed});
+  const _StartWorkButton({
+    this.isLoading = false,
+    this.onPressed,
+    this.isEnabled = true,
+  });
 
   final bool isLoading;
   final VoidCallback? onPressed;
+  final bool isEnabled;
 
   @override
   Widget build(BuildContext context) {
+    if (!isEnabled) {
+      return Container(
+        width: double.infinity,
+        height: 72,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF2F2F7),
+          borderRadius: BorderRadius.circular(36),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: const BoxDecoration(
+                color: ColorConst.white,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.arrow_forward_rounded,
+                color: ColorConst.grey,
+                size: 24,
+              ),
+            ),
+            Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text(
+                    'Буйрутмалар жеткиликсиз',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w400,
+                      color: ColorConst.grey,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Диагностика көйгөйлөрүн чечиңиз',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: ColorConst.black.withValues(alpha: 0.6),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 44),
+          ],
+        ),
+      );
+    }
+
     return SizedBox(
       width: double.infinity,
       height: 56,
